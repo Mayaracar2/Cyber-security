@@ -18,7 +18,7 @@ Em uma das dicas, apresenta as seguintes informações: Confira o nome atual do 
 Logo, sabemos que o novo nome é "meta", insinuando que no arquivo havia `metadados`, que são dados sobre dados — ou seja, são informações que descrevem outros dados.
 
 ## Solução
-No prompet de comando do kali linux, basta entrar no diretório downloads utlizando `cd Downloads/` e emitir o seguinte comando `strings red.py`, retornando o seguinte poema:
+No prompet de comando do kali linux, basta entrar na raiz do diretório downloads utlizando `cd ~/Downloads/` e emitir o seguinte comando `strings red.py`, retornando o seguinte poema:
 
 ![image](https://github.com/user-attachments/assets/b18bed21-25a0-4030-af90-029500636b68)
 
@@ -27,7 +27,7 @@ Analisando a primeira letra de cada frase do poema, temos a seguinte frase:
 
 O LSB é muito usado para esconder informações secretas dentro de imagens sem que o olho humano perceba.
 
-Além disso, usando o comando `exitftool red.py`, extraímos as seguintes informações:
+Além disso, usando o comando `exiftool red.py`, extraímos as seguintes informações:
 
 ![image](https://github.com/user-attachments/assets/78c41e2f-009c-4b73-98e0-f7753ff9a9f7)
 
