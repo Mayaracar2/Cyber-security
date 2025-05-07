@@ -1,7 +1,7 @@
 # Cookie Monster Secret Recipe
 ###### Solved by @Mayaracar2
 > This is a CTF about cookies,Web Exploitation
-## Desafio: Cookie Monster Secret Recipe (Exploração Web)
+## Desafio: Cookie Monster Secret Recipe (Exploração Web) 
 ### Introdução
 O desafio apresenta o seguinte enunciado: "O Monstro dos Come-Come escondeu sua receita secreta de biscoitos em algum lugar do seu site. Como um aspirante a detetive de biscoitos, sua missão é desvendar esse segredo delicioso. Você consegue enganar o Monstro dos Come-Come e encontrar a receita escondida?"
 
