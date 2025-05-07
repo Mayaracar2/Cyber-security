@@ -23,7 +23,9 @@ No prompet de comando do kali linux, basta entrar no diretório downloads utliza
 ![image](https://github.com/user-attachments/assets/b18bed21-25a0-4030-af90-029500636b68)
 
 Analisando a primeira letra de cada frase do poema, temos a seguinte frase: 
-`It CHECK LSB`
+`It CHECK LSB`.
+
+O LSB é muito usado para esconder informações secretas dentro de imagens sem que o olho humano perceba.
 
 Além disso, usando o comando `exitftool red.py`, extraímos as seguintes informações:
 
