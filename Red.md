@@ -32,7 +32,7 @@ cd ~/Downloads
 Em seguida, foi executado:
 
 ```bash
-strings red.py
+strings red.png
 ```
 Esse comando retornou o seguinte poema:
 
@@ -42,6 +42,8 @@ Ao analisar a primeira letra de cada verso, formou-se a mensagem:
 `It CHECK LSB`.
 
 A sigla LSB (Least Significant Bit) refere-se a uma técnica comumente usada para esconder informações dentro de imagens, de forma que o olho humano não perceba.
+
+- [Material sobre LSB](https://hackingnaweb.com/criptografia/esteganografia-por-lsb/)
 
 Adicionalmente, com o comando:
 
@@ -62,6 +64,8 @@ Para extrair as informações escondidas, utilize o site CyberChef, adicione o a
 ![image](https://github.com/user-attachments/assets/2226b7b5-f292-4892-a031-17353569f4a1)
 
 As informações extraídas estavam em formato `base64` e repetidas em um loop.
+
+- [Material sobre base64](https://builtin.com/software-engineering-perspectives/base64-encoding)
 
 Decodificando esse conteúdo base64, foi possível obter a flag final:
 
