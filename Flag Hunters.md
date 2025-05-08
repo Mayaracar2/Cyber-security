@@ -5,8 +5,14 @@
 ### Introdução
 O desafio apresenta o seguinte enunciado:
 
+"Lyrics jump from verses to the refrain kind of like a subroutine call. There's a hidden refrain this program doesn't print by default. Can you get it to print it? There might be something in it for you.
+The program's source code can be downloaded `here`.
+Connect to the program with netcat:
+$ nc verbal-sleep.picoctf.net 56688"
+
+#### Tradução
 "As letras saltam dos versos para o refrão, como uma chamada de subrotina. Há um refrão oculto que este programa não imprime por padrão. Você consegue fazer com que ele o imprima? Pode haver algo nele para você.
-O código fonte do programa pode ser baixado aqui .
+O código fonte do programa pode ser baixado `aqui` .
 Conecte-se ao programa com o netcat:
 $ nc verbal-sleep.picoctf.net 56688"
 
