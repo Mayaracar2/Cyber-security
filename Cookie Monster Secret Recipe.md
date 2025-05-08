@@ -5,6 +5,9 @@
 ### Introdução
 O desafio apresenta o seguinte enunciado: 
 
+"Cookie Monster has hidden his top-secret cookie recipe somewhere on his website. As an aspiring cookie detective, your mission is to uncover this delectable secret. Can you outsmart Cookie Monster and find the hidden recipe?"
+
+#### Tradução
 "O Monstro dos Come-Come escondeu sua receita secreta de biscoitos em algum lugar do seu site. Como um aspirante a detetive de biscoitos, sua missão é desvendar esse segredo delicioso. Você consegue enganar o Monstro dos Come-Come e encontrar a receita escondida?"
 
 - [Página do desafio](https://play.picoctf.org/practice/challenge/469)
