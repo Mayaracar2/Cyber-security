@@ -5,6 +5,11 @@
 ### Introdução
 O desafio apresenta o seguinte enunciado:
 
+"RED, RED, RED, RED
+
+Download the image: `red.png`"
+
+#### Tradução
 "VERMELHO, VERMELHO, VERMELHO, VERMELHO
 
 Baixe a imagem: `red.png`"
