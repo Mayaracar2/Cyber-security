@@ -3,7 +3,12 @@
 > This is a CTF about Cryptography
 ## Desafio:Interencdec (Cryptography)
 ### Análise inicial
-O desafio apresenta o seguinte enunciado: "Você consegue entender o significado real deste arquivo?"
+O desafio apresenta o seguinte enunciado: 
+
+"Can you get the real meaning from this file."
+
+#### Tradução
+"Você consegue entender o significado real deste arquivo?"
 
 - [Página do desafio](https://play.picoctf.org/practice/challenge/418)
 
