@@ -2,7 +2,7 @@
 ###### Solved by @Mayaracar2
 > This is a CTF about Cryptography
 ## Desafio:Interencdec (Cryptography)
-### Análise inicial
+### Análise inicial 
 O desafio apresenta o seguinte enunciado: 
 
 "Can you get the real meaning from this file."
