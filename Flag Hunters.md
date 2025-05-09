@@ -36,7 +36,7 @@ cat lyric-reader.py
 ```
 Esse comando retornou o seguinte código:
 
-```
+``` py
 import re
 import time
 
