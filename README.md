@@ -1,2 +1,2 @@
 # Cyber-security
-Resoluções das questões do picoCTF.
+Resoluções de questões voltadas para cyber-security.
