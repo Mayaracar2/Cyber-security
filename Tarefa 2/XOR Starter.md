@@ -43,7 +43,7 @@ Para resolver o desafio, foi utilizado Python no terminal do Kali Linux. Primeir
 source venv/bin/activete
 ```
 
-A ativação do ambiente virtual (`venv`) é recomendada para isolar dependências e evitar alterações no ambiente global do sistema.
+A ativação do ambiente virtual (`venv`) cria uma cópia isolada do interpretador Python que permite instalar pacotes sem afetar o ambiente global do seu sistema. Isso é útil principalmente quando você tem diferentes projetos que usam diferentes versões de bibliotecas.
 
 Em seguida, foi executado:
 
