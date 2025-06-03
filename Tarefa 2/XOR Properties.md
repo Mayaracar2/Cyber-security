@@ -38,7 +38,31 @@ Por exemplo:
 
 `1 ^ 1 = 0`
 
-A operação XOR (⊕) tem algumas propriedades importantes que facilitam seu uso em computação. Primeiro, ela é comutativa, ou seja, a ordem dos valores não altera o resultado (A ⊕ B = B ⊕ A). Também é associativa, o que significa que a forma de agrupar as operações não importa (A ⊕ (B ⊕ C) = (A ⊕ B) ⊕ C). O número zero funciona como elemento neutro, pois qualquer valor XOR com zero permanece igual (A ⊕ 0 = A). Por fim, XOR é seu próprio inverso, já que qualquer valor XOR consigo mesmo resulta em zero (A ⊕ A = 0). Essas propriedades tornam o XOR útil em várias aplicações, como criptografia e manipulação de dados.
+A operação XOR (⊕) tem algumas propriedades importantes que facilitam seu uso:
+
+COMUTATIVA:
+
+`A ⊕ B = B ⊕ A`
+
+A ordem dos operandos não importa. Isso significa que você pode trocar a posição dos valores sem alterar o resultado.
+
+ASSOCIATIVA:
+
+`(A ⊕ B) ⊕ C = A ⊕ (B ⊕ C)`
+
+Assim como na adição comum, é possível agrupar os valores de diferentes formas ao aplicar o XOR, e o resultado será o mesmo.
+
+ELEMENTO NEUTRO:
+
+`A ⊕ 0 = A`
+
+Qualquer valor XOR com 0 continua sendo ele mesmo. Isso significa que 0 é o elemento neutro do XOR.
+
+INVERSO:
+
+`A ⊕ A = 0`
+
+Um valor XOR com ele mesmo resulta sempre em 0. Isso é muito útil, por exemplo, para "desfazer" operações em algoritmos (como em criptografia ou troca de variáveis sem variável auxiliar).
 
 Além disso, foi apresentado as seguintes informações:
 
@@ -61,22 +85,75 @@ python3
 ```
 No interpretador, utilizou-se o seguinte código:
 
-![image](https://github.com/user-attachments/assets/c8d58068-d8b4-409d-84bd-48bb210e6c6d)
+![image](https://github.com/user-attachments/assets/1be55d01-7b90-43f1-bd1a-ef3964d64e6e)
+
 
 Explicação das funções utilizadas:
 
-`ord(c)`: Converte um caractere em seu valor inteiro (ASCII).
+```bash.py
+from pwn import xor
+```
 
-`^ 13`: Aplica a operação XOR com o número 13.
+Importa a função xor da biblioteca pwntools, que facilita operações de XOR entre bytes.
 
-`chr(...)`: Converte o número resultante de volta em caractere.
+```bash.py
+key1 = bytes.fromhex("a6c8b6733c9b22de7bc0253266a3867df55acde8635e19c73313")
+key2_xor_key1 = bytes.fromhex("37dbc292030faa90d07eec17e3b1c68daf94c354dc991a5e1e")
+key2_xor_key3 = bytes.fromhex("c1547556687e7573db23aac13452a098b71a7bf0fddddde5fc1")
+flag_xor_keys = bytes.fromhex("04ee9855208a2cd590910d0476a7e47963170d1660d7f56f5faf")
+```
 
-`''.join([...])`: Junta os caracteres gerados em uma nova string.
+`key1` é conhecida diretamente.
+
+`key2_xor_key1` representa `key2 ⊕ key1`
+
+`key2_xor_key3` representa `key2 ⊕ key3`
+
+`flag_xor_keys` representa `flag ⊕ key1 ⊕ key2 ⊕ key3`
+
+
+```bash.py
+key2 = xor(key1, key2_xor_key1)
+```
+
+Usa a propriedade:
+
+A ⊕ B = C → C ⊕ A = B
+
+Logo, `key2 = key1 ⊕ (key2 ⊕ key1)`
+
+
+```bash.py
+key3 = xor(key2, key2_xor_key3)
+```
+
+Utiliza a mesma propriedade anterior:
+
+`key3 = key2 ⊕ (key2 ⊕ key3)`
+
+
+```bash.py
+flag = xor(flag_xor_keys, key1, key2, key3)
+```
+
+Aqui, temos:
+
+`flag_xor_keys = flag ⊕ key1 ⊕ key2 ⊕ key3`
+
+Usamos novamente a propriedade do XOR para "cancelar" os três valores:
+
+`flag = flag_xor_keys ⊕ key1 ⊕ key2 ⊕ key3`
+
+```bash.py
+print("FLAG:", flag.decode())
+```
+
+Decodifica os bytes da flag para texto legível.
 
 E por fim, printamos o resultado: 
 
->`crypto{aloha}`
+>`crypto{x0r_i5_ass0c1at1v3}`
 
-Com esta atividade, foi possível adquirir conhecimentos fundamentais na área de cibersegurança, especialmente no que diz respeito à codificação e manipulação de dados em baixo nível. Aprendemos o funcionamento da operação XOR, muito utilizada em algoritmos de criptografia simples e em técnicas de ofuscação de dados. Compreendemos como textos podem ser representados em seus valores binários ou inteiros (ASCII), e como a operação XOR pode ser aplicada para transformar ou ocultar mensagens. Além disso, foi possível entender a importância da reversibilidade em certas operações criptográficas, característica essencial em métodos de cifra simétrica. Também tivemos contato com ferramentas básicas da linguagem Python que são amplamente utilizadas em scripts de análise e quebra de criptografia, como ord(), chr() e operadores bit a bit. Esses conceitos são fundamentais para áreas como engenharia reversa, análise de malware e desenvolvimento de algoritmos de criptografia.
+Este desafio mostra como a operação XOR, comum em criptografia simétrica, pode ser usada tanto para proteger quanto para quebrar sistemas quando mal aplicada. A partir de uma chave conhecida e de combinações XOR expostas, foi possível reconstruir outras chaves e decifrar a flag. Isso evidencia riscos como a reutilização de chaves e a exposição de dados intermediários. O problema ensina noções básicas de criptografia, criptanálise por reconstrução e reforça a importância de manter chaves sempre secretas para garantir a segurança da informação.
 
  
