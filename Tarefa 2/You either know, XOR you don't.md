@@ -29,7 +29,7 @@ Por exemplo:
 
 `1 ^ 1 = 0`
 
-A princípio, foi apresentado a seguinte informação:
+Inicialmente, o desafio fornece uma sequência de dados em hexadecimal:
 
 ![image](https://github.com/user-attachments/assets/ae9a57fd-2470-4edd-ac89-46f8682259c4)
 
