@@ -25,18 +25,18 @@ Por exemplo:
 
 `1 ^ 1 = 0`
 
-A princípio, foi apresentado a seguinte informação:
+A informação inicial fornecida no desafio estava em formato hexadecimal, como mostrado na imagem abaixo:
 
 ![image](https://github.com/user-attachments/assets/e165e1a4-d2de-46a3-9f62-09796a356fc5)
 
 ## Solução
-Para resolver o desafio, utilize o `cyberchef`.
+Para resolver o desafio, foi utilizado o `CyberChef`, uma ferramenta que permite manipular dados binários e realizar diversas operações de criptografia e decodificação.
 
 - [Cyberchef](https://gchq.github.io/CyberChef/)
 
-Primeiro cole a informação que foi fornecida na página e converta para `hexadecimal`.
+A primeira etapa foi colar os dados fornecidos no CyberChef e converter a string representada em hexadecimal para seus valores reais em bytes (ou caracteres).
 
-É necessário converter para hexadecimal porque a operação de XOR é geralmente aplicada a bytes. Quando você tem dados criptografados ou ocultos, eles frequentemente são representados em hexadecimal ou binário, que são formas compactas de armazenar e manipular dados binários.
+É necessário decodificar o hexadecimal porque a operação de XOR é geralmente aplicada a bytes. Quando você tem dados criptografados ou ocultos, eles frequentemente são representados em hexadecimal ou binário, que são formas compactas de armazenar e manipular dados binários.
   
 ![image](https://github.com/user-attachments/assets/b102644c-e43a-4d93-bb09-7a0b9fcdaeb5)
 
@@ -48,7 +48,7 @@ No caso de um XOR com um único byte, existem apenas 256 possibilidades (de 0 a 
 
 ![image](https://github.com/user-attachments/assets/71cc4fa5-85de-482e-994c-27ed9693b983)
 
-Analiando as chaves que foram geradas, é possivel encontrar a flag na `chave 10`.
+Após analisar os resultados gerados por cada tentativa de chave, foi possível encontrar a flag correta utilizando a `chave 10` (0x10).
 
 ![image](https://github.com/user-attachments/assets/8d6d6a26-5f72-4aed-aaee-28695defccd4)
 
