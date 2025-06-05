@@ -34,19 +34,19 @@ Inicialmente, o desafio fornece uma sequência de dados em hexadecimal:
 ![image](https://github.com/user-attachments/assets/ae9a57fd-2470-4edd-ac89-46f8682259c4)
 
 ## Solução
-Para resolver o desafio, utilize o `cyberchef`.
+Para resolver o desafio, foi utilizado o `CyberChef`, uma ferramenta que permite manipular dados binários e realizar diversas operações de criptografia e decodificação.
 
 - [Cyberchef](https://gchq.github.io/CyberChef/)
 
-Primeiro cole a informação que foi fornecida na página e converta para `hexadecimal`.
+A primeira etapa foi colar os dados fornecidos no CyberChef e converter a string representada em hexadecimal para seus valores reais em bytes (ou caracteres).
 
-É necessário converter para hexadecimal porque a operação de XOR é geralmente aplicada a bytes. Quando você tem dados criptografados ou ocultos, eles frequentemente são representados em hexadecimal ou binário, que são formas compactas de armazenar e manipular dados binários.
+É necessário decodificar o hexadecimal porque a operação de XOR é geralmente aplicada a bytes. Quando você tem dados criptografados ou ocultos, eles frequentemente são representados em hexadecimal ou binário, que são formas compactas de armazenar e manipular dados binários.
 
 ![image](https://github.com/user-attachments/assets/22da4002-cfab-4c3c-9731-a227acd972da)
 
 Em seguida, utilize o formato da flag na ferramenta `XOR` e adicione codificação `UTF-8`,que define como cada caractere do texto será transformado em bytes.
 
-Ao usar esse formato conhecido como parte da chave, podemos aplicar XOR à mensagem criptografada com o texto "crypto{" no início para tentar recuperar o restante da flag. Isso é possível porque a operação XOR tem a seguinte propriedade:
+Ao usar esse formato conhecido como parte da chave, podemos aplicar XOR inverso à mensagem criptografada com o texto "crypto{" no início para tentar recuperar o restante da flag. Isso é possível porque a operação XOR tem a seguinte propriedade:
 
 `A ^ B = C  →  C ^ A = B`
 
@@ -54,7 +54,7 @@ Ou seja, se você souber parte do resultado esperado (como "crypto{"), você pod
 
 ![image](https://github.com/user-attachments/assets/90ac37e3-746b-4397-970c-5cc16b4a7f61)
 
-Portanto, substitua o formato da flag, pelos 8 primeiros caracteres que foram impressos na saída:
+Substituindo o conteúdo da flag pelos 8 primeiros caracteres esperados (impressos no resultado do XOR), foi possível revelar todo o conteúdo criptografado:
 
 ![image](https://github.com/user-attachments/assets/f1247b25-231c-4cb0-a912-35fd4da9b6ae)
 
