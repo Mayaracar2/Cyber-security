@@ -21,11 +21,36 @@ Este código é uma função que tem como objetivo criar uma string HTML contend
 
 Para explorarmos essa vulnerabilidade usaremos:
 
-`"><script>prompt(1)</script>`
+```bash
+"><script>prompt(1)</script>`
+```
 
 Por que funciona?
 
 -Fecha o atributo value usando `>`, escapando do contexto onde o conteúdo deveria ser tratado apenas como texto.
 
 -Em seguida, ele insere uma tag `<script>`, que o navegador reconhece e executa como código JavaScript, visto que a função não realiza nenhum filtro ou escape dos caracteres especiais (<, >, "), o navegador interpreta a injeção como parte do HTML, em vez de simples texto, permitindo a execução do script malicioso.
+
+### Fase 1
+Este é o código dado:
+
+```bash
+function escape(input) {
+    // tags stripping mechanism from ExtJS library
+    // Ext.util.Format.stripTags
+    var stripTagsRE = /<\/?[^>]+>/gi;
+    input = input.replace(stripTagsRE, '');
+
+    return '<article>' + input + '</article>';
+}         
+```
+Neste código, a função recebe um input e remove todas as tags HTML usando uma expressão regular (stripTagsRE).
+
+Para explorarmos essa vulnerabilidade usaremos:
+
+```bash
+<svg/onload=prompt(1)
+```
+
+Por que funciona?
 
