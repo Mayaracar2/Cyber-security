@@ -54,3 +54,51 @@ Para explorarmos essa vulnerabilidade usaremos:
 
 Por que funciona?
 
+`<svg/`: A regex falha em detectá-lo como tag devido à sua sintaxe incomum, porém passa "ileso".
+
+`onload=prompt(1)`: Atributo de evento JavaScript que é disparado, executando o prompt(1).
+
+### Fase 2
+Este é o código dado:
+
+```bash
+function escape(input) {
+    //                      v-- frowny face
+    input = input.replace(/[=(]/g, '');
+
+    // ok seriously, disallows equal signs and open parenthesis
+    return input;
+}        
+```
+
+Nesse código, tem uma função de escape que remove caracteres específicos como `(=` e `()` de uma string de entrada.
+
+Para explorarmos essa vulnerabilidade usaremos:
+
+```bash
+<svg><script>prompt&#40;1)</script>
+```
+
+Por que funciona?
+
+`<svg>`: Utilizado como uma "camuflagem", na qual a tag é permitida pelo navegador, ativando o modo SVG e dentro dele, é possivel rodar o <script> normalmente.
+
+`prompt&#40;1)`: O `&#40;` é decodificado pelo navegador como ( , com base no  [HTML entities](https://www.freeformatter.com/html-entities.html)
+
+&#112; → p
+
+&#114; → r
+
+&#111; → o
+
+&#109; → m
+
+&#112; → p
+
+&#116; → t
+
+&#40; → (
+
+&#49; → 1
+
+&#41; → )
