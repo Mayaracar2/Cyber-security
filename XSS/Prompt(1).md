@@ -280,7 +280,7 @@ Nesse código, a função escape remove quebra de linh, aspas e alguns caractere
 #### Payload usado:
 
 ```bash
-javascript:prompt(1)#{"action":1}
+document.getElementById("input").value="\u2028prompt(1)\u2028-->"
 ```
 (executado no console)
 
