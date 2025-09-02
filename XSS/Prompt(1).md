@@ -121,19 +121,7 @@ Nesse código, a função de escape adiciona o input dentro de um comentário HT
 `<svg onload=prompt(1)>`: Executa o JavaScript quando o elemento é carregado.
 
 ### Fase 4
-Este é o código dado:
-
-```bash
-
-       
-```
-#### Payload usado:
-
-```bash
-
-```
-
-#### Por que funciona?
+Não foi possível concluir essa fase.
 
 ### Fase 5
 Este é o código dado:
@@ -481,20 +469,7 @@ O código recebe um JSON com a URL de uma imagem, aplica configurações padrão
 Isso funciona porque o `extend()` permite poluir o `__proto__`, o que injeta a propriedade source maliciosa dentro de config. A regex de validação não é suficiente para bloquear isso, e o valor injetado vai parar dentro do src da `<img>`, ativando o onerror.
 
 ### Fase E
-Este é o código dado:
-
-```bash
-
-```
-#### Análise:
-
-#### Payload usado:
-
-```bash
-
-```
-
-#### Por que funciona? 
+Não foi possível concluir essa fase.
 
 ### Fase F
 Este é o código dado:
