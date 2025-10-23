@@ -72,10 +72,6 @@ Depois disso, precisamos verificar o registro para ver onde nosso código shell 
 
 A análise da memória mostrou o início do NOP sled (\x90), seguido pelo shellcode. Qualquer endereço dentro deste NOP sled pode ser usado como endereço de retorno.
 
-Aqui está uma versão simplificada e mais fluida, mantendo o tom técnico do writeup:
-
-"A análise da memória mostrou o início do NOP sled (\x90), seguido pelo shellcode. Qualquer endereço dentro deste NOP sled pode ser usado como endereço de retorno.
-
 Para este payload, foi escolhido o endereço `0x7fffffffe298`. Convertendo-o para o formato little-endian (o padrão de arquitetura), o endereço de retorno a ser usado é:
 
 `'\x98\xe2\xff\xff\xff\x7f'`
