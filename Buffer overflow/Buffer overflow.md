@@ -1,4 +1,4 @@
-# Buffer Overflow 1
+# Buffer Overflow 
 ###### Written by @Mayaracar2
 >These are challenges about Buffer Overflows
 ## Definição
@@ -149,9 +149,6 @@ Acessando novamente o arquivo `secret.txt` usando o comando `cat` e estando cone
 >`wowanothertime!!`
 
 ## Conclusão
-Aqui está uma sugestão de conclusão:
-
-Conclusão
 Estes desafios demonstraram com sucesso a exploração prática de vulnerabilidades de stack-based buffer overflow. Através da análise em GDB, foi possível calcular os offsets corretos para sobrescrever o endereço de retorno (RIP).
 
 A técnica central envolveu a injeção de um shellcode personalizado (para alterar o UID com setreuid e invocar uma shell) e o redirecionamento do fluxo de execução do programa para ele. Os exercícios destacam o perigo crítico de usar funções inseguras como strcpy e strcat sem validação de limites, o que pode levar diretamente à execução de código arbitrário e à escalada de privilégios.
