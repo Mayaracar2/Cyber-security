@@ -53,6 +53,9 @@ Em seguida utilize:
 
 `pwn shellcraft -f d amd64.linux.setreuid 1002`
 
+<img width="497" height="75" alt="image" src="https://github.com/user-attachments/assets/3204cea8-691d-4381-a817-a663b2d3c955" />
+
+
 Com isso, podemos adicioná-lo ao nosso código e procurar o endereço de retorno do nosso código shell no gdb.
 
 Nosso shellcode agora tem 54 bytes. Excluindo o endereço de retorno de 6 bytes, restam 98 bytes. Nosso payload ficará assim:
