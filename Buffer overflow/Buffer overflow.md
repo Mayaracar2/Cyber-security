@@ -5,7 +5,7 @@
 Um buffer overflow (estouro de buffer) é uma falha de segurança que ocorre quando um programa tenta escrever mais dados em um "buffer" (uma área de memória de tamanho fixo) do que ele pode conter. Isso faz com que os dados excedentes sobrescrevam áreas de memória adjacentes.sse comportamento pode corromper dados, causar falhas no programa ou, em um cenário de exploração, permitir que um atacante execute código malicioso para assumir o controle do sistema.
 
 ## Desafio Buffer Overflow 1
-Explorar a falha de buffer overflow para obter uma shell e ler o conteúdo do arquivo `secret.txt`.
+Explorar a falha de buffer overflow para obter uma shell e ler o conteúdo do arquivo `secret.txt`. 
 
 Código fornecido:
 ```bash
