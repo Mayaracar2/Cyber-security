@@ -4,100 +4,122 @@
 > This is a CTF about dynamic analysis
 ## Desafio: Crack (Reverse engineering) 
 ### Análise inicial
-A princípio, o desafio forneceu um arquivo nomeado como crack denominado como engenharia reversa, para entender melhor sobre o arquivo, foi executado o seguinte comando:
+AO desafio fornecia um arquivo executável denominado crack, classificado como um exercício de engenharia reversa. Para identificar o tipo de arquivo, foi utilizado o comando:
 
-`file crack`
+```bash
+file crack
+```
 
 <img width="661" height="113" alt="image" src="https://github.com/user-attachments/assets/c6c0d4e8-adfc-499e-8055-73aabf2552a7" />
 
-Com isso é possível ver que o arquivo é um executavel vinculado dinamicamente, isso significa que ele não contém todo o código de que precisa para rodar e que precisa de um input.
+A saída revelou que se tratava de um executável dinamicamente vinculado, o que indica que ele depende de bibliotecas externas e requer um input para sua execução correta.
 
-Para dar acesso para ele ser executado, utilize :
+Para conceder permissão de execução, foi executado:
 
-`chmod -X crack`
+```bash
+chmod +x crack
+```
 
-Em seguida rode o arquivo com:
+Em seguida, o binário foi iniciado com:
 
-`./crack`
-
-Com isso, ele pede a entrada de uma senha e caso ela esteja incorreta, ele retorna "Bad Kitty!"
+```bash 
+./crack
+```
+O programa solicitava a entrada de uma senha e, quando uma senha incorreta era fornecida, exibia a mensagem `"Bad Kitty!"`.
 
 <img width="273" height="108" alt="image" src="https://github.com/user-attachments/assets/fb164130-d676-4386-b3fe-0c325a11643b" />
 
 ## Solução
-Para prosseguir, utilize o gdb e utilize o seguinte comando:
+Para prosseguir com a análise, o binário foi aberto no GDB com o comando:
 
-`gdb ./crack`
+```bash
+gdb ./crack
+```
 
-Definir um breakpoint na main: Para garantir que o programa pare no início, antes de qualquer execução:
+Primeiramente, foi definido um breakpoint na `função main`, garantindo que a execução fosse interrompida logo no início:
 
-`(gdb) break main`
+```bash
+(gdb) break main
+(gdb) run
+```
+Como a localização da string "Bad Kitty!" ainda era desconhecida, definiu-se um novo breakpoint na função puts, responsável por imprimir mensagens na tela:
 
-Executar o programa:
+```break
+(gdb) break puts
+(gdb) continue
+```
+Após fornecer uma senha incorreta e pressionar Enter, o programa parou dentro da `função puts`. Para verificar quem havia chamado essa função, foi utilizado o comando:
 
-`(gdb) run`
+```bash
+(gdb) finish
+```
+Esse comando concluiu a execução de puts e retornou o controle ao ponto seguinte à sua chamada na função main, onde ocorria a validação da senha.
 
-Definir o breakpoint na função de impressão: Como não sabíamos onde a string "Bad kitty!" estava, definimos um breakpoint na função que a imprimiria, a puts.
+Para inspecionar o código responsável pela comparação da senha, foi utilizado:
 
-`(gdb) break puts`
+```bash
+(gdb) x/15i $rip - 40
+```
+ou, alternativamente,
 
-Continuar a execução e fornecer um input falso:
-
-`(gdb) continue`
-
-Quando o programa pediu a senha (enter the right password), digitamos uma senha falsa e apertamos Enter.
-
-Sair da função puts: O GDB parou dentro da função puts. Para ver quem chamou a puts, usamos o comando finish.
-
-`(gdb) finish`
-
-Isso terminou a execução da puts e nos deixou parados na instrução exatamente seguinte à call puts, já no código "ruim" da main.
-
-Com isso, precisamos achar onde faz a valição de senha
-
-`(gdb) x/15i $rip - 40` ou Use `disassemble` para ver a função completa.
+```bash
+(gdb) disassemble
+```
 
 <img width="663" height="283" alt="image" src="https://github.com/user-attachments/assets/69d2bab8-a5f9-44ba-8161-90da210a0ab5" />
 
-Isso nos disse que a verificação principal acontece no endereço `0x0000555555555555`.
+A análise revelou que a instrução de comparação principal estava localizada no endereço `0x0000555555555555`.
 
-Para extrair a Senha Correta,Descobrimos que o programa compara %bl (que continha o caractere correto) com 0x60(%rsp...) (que continha nosso input). No disassembly completo, vimos que o caractere correto era carregado para %ebx a partir de 0x10(%rsp...).
+O binário carrega o caractere esperado em `%ebx` e compara apenas o byte baixo `(%bl)` com o byte correspondente do input localizado na pilha `(0x60(%rsp))`. O valor do caractere correto estava armazenado previamente em `0x10(%rsp)` e foi carregado para `%ebx` antes da comparação. A instrução cmp entre %bl e 0x60(%rsp) é seguida por um salto condicional (jmp para o caminho de erro): se os bytes diferirem, o programa salta para a rotina que imprime "Bad Kitty!"; se forem iguais, continua para a próxima comparação.
 
-Reiniciar o programa:
+Para extrair a senha correta, o programa foi reiniciado:
 
-`(gdb) run`
+```bash
+(gdb) run
+```
 
-Definir o breakpoint no "Cofre": Removemos os breakpoints antigos e colocamos um novo, exatamente na instrução cmp.
+Os breakpoints anteriores foram removidos e um novo foi definido exatamente na instrução de comparação (cmp):
 
-`(gdb) delete`
+```bash
+(gdb) delete
+(gdb) break *0x0000555555555555
+```
 
-`(gdb) break *0x0000555555555555`
+Em seguida, o programa foi executado novamente com uma senha falsa de 8 caracteres, já que a análise do código indicava que a senha possuía esse tamanho:
 
-Continuar e fornecer um input falso (de 8 caracteres): Pela análise anterior do código, sabíamos que a senha tinha 8 caracteres.
+```bash
+(gdb) continue
+```
 
-`(gdb) continue`
+No momento em que o programa parou no breakpoint, a senha correta estava armazenada na memória. Para visualizá-la, foi utilizado:
 
-(O GDB parou na main)
-
-`(gdb) continue`
-
-Ler a Senha da Memória (A Chave Mestra): O programa parou no nosso breakpoint (cmp), pronto para comparar o primeiro caractere. Neste exato momento, a senha correta inteira estava na memória. Lemos os 8 bytes (/8cb) a partir do local de origem ($rsp+0x10).
-
-`(gdb) x/8cb $rsp+0x10`
+```bash
+(gdb) x/8cb $rsp+0x10
+```
 
 <img width="651" height="57" alt="image" src="https://github.com/user-attachments/assets/4ce8dec3-7432-4484-8f86-795a5580a3fd" />
 
-O GDB imprimiu os 8 bytes da senha correta: `0x7fffffffdca0: 48 '0' 48 '0' 115 's' 71 'G' 111 'o' 52 '4' 77 'M' 48 '0'`
+O comando exibiu os `8 bytes` correspondentes à senha correta:
 
-Transcrevendo os caracteres, encontramos a senha: `00sGo4M0`
+ ```bash
+ 0x7fffffffdca0: 48 '0' 48 '0' 115 's' 71 'G' 111 'o' 52 '4' 77 'M' 48 '0'
+```
 
-Após executar o arquivo novamente e inserir a senha correta, irá retornar "Good Kitty!":
+Convertendo os valores, obteve-se a senha:
+
+```bash
+00sGo4M0
+```
+
+Ao executar novamente o binário e inserir a senha correta, o programa exibiu a mensagem `"Good Kitty!"`, confirmando o sucesso da validação.
 
 <img width="269" height="107" alt="image" src="https://github.com/user-attachments/assets/4cdfbdf9-3077-4dd3-88ff-c49f99dcac78" />
 
 >`00sGo4M0`
 
 ### Conclusão
-Em conclusão, este desafio de engenharia reversa foi resolvido através da análise dinâmica com o GDB. A estratégia principal foi identificar a lógica de verificação da senha, primeiro localizando a saída de erro e depois inspecionando o código que levava a ela. Ao definir um breakpoint na instrução de comparação, foi possível ler a senha correta diretamente da memória antes que ela fosse comparada, resultando na flag 00sGo4M0.
+O desafio foi resolvido por meio de análise dinâmica utilizando o GDB. A abordagem adotada consistiu em rastrear o fluxo do programa até a rotina de verificação da senha, iniciando pela interceptação da função puts e avançando até o ponto de comparação dos caracteres.
+
+Ao identificar a instrução responsável pela validação, foi possível ler diretamente da memória o conteúdo correspondente à senha correta, resultando na flag `00sGo4M0`.
 
  
