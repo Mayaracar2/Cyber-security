@@ -4,7 +4,7 @@
 > This is a CTF about dynamic analysis
 ## Desafio: Crack (Reverse engineering) 
 ### Análise inicial
-AO desafio fornecia um arquivo executável denominado crack, classificado como um exercício de engenharia reversa. Para identificar o tipo de arquivo, foi utilizado o comando:
+O desafio fornecia um arquivo executável denominado crack, classificado como um exercício de engenharia reversa. Para identificar o tipo de arquivo, foi utilizado o comando:
 
 ```bash
 file crack
