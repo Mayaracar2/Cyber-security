@@ -1,4 +1,6 @@
-# Trypwnmeone
+# TryPwnMeOne
+###### Written by @Mayaracar2
+>These are challenges about Buffer Overflow, PWN
 
 ## Desafio: TryOverlfowMe 1 (Exploração Binária)
 
@@ -8,7 +10,7 @@ No primeiro desafio, enfrentamos uma vulnerabilidade clássica de buffer overflo
 
 ### Análise inicial:
 
-O programa recebe uma entrada do usuário através da função insegura gets(). Se a variável admin for definida como 1 (provavelmente através de um buffer overflow), ele abre e imprime o conteúdo de flag.txt; caso contrário, ele encerra.
+O programa recebe uma entrada do usuário através da função insegura `gets()`. Se a variável admin for definida como 1 (provavelmente através de um buffer overflow), ele abre e imprime o conteúdo de `flag.txt`, caso contrário, ele encerra.
 
 A vulnerabilidade existe devido ao uso da função gets(), que não realiza verificação de limites (bounds checking). Isso nos permite executar um buffer overflow, sobrescrever o conteúdo da variável admin e ler a flag.
 
@@ -39,7 +41,7 @@ int main(){
 }
 ```
 
-O próximo passo é executar o overflowme1 para observar seu comportamento. Ao fornecer um comentário que excede o buffer, conseguimos causar uma falha de segmentação (segmentation fault).
+O próximo passo é executar o `overflowme1` para observar seu comportamento. Ao fornecer um comentário que excede o buffer, conseguimos causar uma falha de segmentação (segmentation fault).
 
 ### Solução:
 
@@ -84,9 +86,9 @@ No segundo desafio, também enfrentamos uma vulnerabilidade clássica de buffer 
 
 ### Análise inicial:
 
-Assim como no desafio anterior, o programa recebe uma entrada do usuário. Ele verifica se um valor específico (0x59595959) está definido na variável admin e, em caso afirmativo, lê e imprime o conteúdo de flag.txt. Caso contrário, ele encerra.
+Assim como no desafio anterior, o programa recebe uma entrada do usuário. Ele verifica se um valor específico `(0x59595959)` está definido na variável admin e, em caso afirmativo, lê e imprime o conteúdo de `flag.txt`. Caso contrário, ele encerra.
 
-Desta vez, o buffer é um pouco maior (64 bytes) e o valor para o qual a variável admin deve ser alterada é 0x59595959.
+Desta vez, o buffer é um pouco maior (64 bytes) e o valor para o qual a variável admin deve ser alterada é `0x59595959`.
 
 ```bash
 int read_flag(){
@@ -126,12 +128,12 @@ int main(){
 }
 ```
 
-Ao executarmos o overflowme2 para testar, confirmamos que, ao fornecer um comentário maior que o buffer, causamos uma falha de segmentação (segmentation fault).
+Ao executarmos o `overflowme2` para testar, confirmamos que, ao fornecer um comentário maior que o buffer, causamos uma falha de segmentação (segmentation fault).
 
 ### Solução:
 Com o script Pwntools a seguir, conseguimos nos conectar à máquina alvo do desafio.
 
-Ele cria um payload que consiste em 64 bytes A (padding) para estourar o buffer, seguido pelo valor 0x59595959 (empacotado com p32) repetido várias vezes para garantir a sobrescrita da variável admin.
+Ele cria um payload que consiste em 64 bytes A (padding) para estourar o buffer, seguido pelo valor `0x59595959` (empacotado com p32) repetido várias vezes para garantir a sobrescrita da variável admin.
 
 Após enviar o payload, o script entra em modo interativo para exibir a flag retornada pelo servidor.
 
@@ -194,7 +196,7 @@ O próximo passo é executar o tryexecme para observar seu comportamento. O prog
 ### Solução
 Usamos o script Pwntools a seguir para resolver o desafio. Precisamos definir o contexto da arquitetura para amd64 (para a geração correta do shellcode) e, em seguida, conectar à máquina alvo.
 
-O script cria um shellcode que gera uma shell (shellcraft.sh()) e o envia como payload. Finalmente, mudamos para o modo interativo para interagir com a shell que recebemos.
+O script cria um shellcode que gera uma shell `(shellcraft.sh())` e o envia como payload. Finalmente, mudamos para o modo interativo para interagir com a shell que recebemos.
 
 ```bash
 from pwn import *
@@ -219,15 +221,15 @@ Após executarmos nosso script, recebemos uma shell na máquina alvo e conseguim
 
 `THM{a_r3t_to_w1n_by_thm}`
 
-##Desafio: TryRetMe (Exploração Binária)
+## Desafio: TryRetMe (Exploração Binária)
 
 ### Introdução:
-No quarto desafio, enfrentamos uma vulnerabilidade do tipo ret2win. Um ret2win (Return-to-Win) é um tipo de binário onde existe uma função win() (ou equivalente) que não é chamada, e nosso objetivo é redirecionar a execução do programa para ela.
+No quarto desafio, enfrentamos uma vulnerabilidade do tipo ret2win. Um ret2win (Return-to-Win) é um tipo de binário onde existe uma função `win()` (ou equivalente) que não é chamada, e nosso objetivo é redirecionar a execução do programa para ela.
 
 ### Análise inicial:
-O programa exibe a mensagem "Return to where? : " e lê até 512 bytes de entrada. Após ler a entrada, ele imprime "ok, let's go!" e termina.
+O programa exibe a mensagem "Return to where? : " e lê até 512 bytes de entrada. Após ler a entrada, ele imprime `"ok, let's go!"` e termina.
 
-A função win(), que executaria system("/bin/sh") e nos daria uma shell, é definida no código, mas nunca é invocada no fluxo de execução normal.
+A função `win()`, que executaria `system("/bin/sh")` e nos daria uma shell, é definida no código, mas nunca é invocada no fluxo de execução normal.
 
 ```bash
 int win(){
@@ -247,7 +249,7 @@ int main(){
     vuln();
 }
 ```
-Nosso objetivo é usar o buffer overflow na função vuln() para sobrescrever o endereço de retorno na stack (controlando o registrador $rsp) e substituí-lo pelo endereço da função win().
+Nosso objetivo é usar o buffer overflow na função `vuln()` para sobrescrever o endereço de retorno na stack (controlando o registrador $rsp) e substituí-lo pelo endereço da função win().
 
 Para isso, precisamos de duas informações:
 
@@ -308,12 +310,12 @@ Após executarmos nosso script, recebemos uma shell na máquina alvo e conseguim
 ## Desafio: Random Memories (Exploração Binária)
 
 ###Introdução:
-Esta é uma continuação da vulnerabilidade ret2win anterior. No entanto, desta vez estamos lidando com ASLR (Address Space Layout Randomization). Novamente, temos uma função win() cujo endereço queremos sobrescrever no registrador $rsp.
+Esta é uma continuação da vulnerabilidade ret2win anterior. No entanto, desta vez estamos lidando com ASLR (Address Space Layout Randomization). Novamente, temos uma função win() cujo endereço queremos sobrescrever no registrador `$rsp`.
 
 O ASLR é uma técnica de segurança que randomiza os endereços de memória, tornando mais difícil para um atacante prever a localização de funções críticas. Este mecanismo pode ser contornado (bypassed) se recebermos endereços vazados (leaked addresses), pois podemos determinar o offset relativo ao endereço base a partir desse vazamento.
 
 ### Análise inicial:
-O programa exibe o endereço da função vuln() (o "vazamento"), em seguida, solicita uma entrada. Ele lê 512 bytes para um buffer de apenas 32 bytes, causando um buffer overflow. A função win() não é chamada diretamente.
+O programa exibe o endereço da função `vuln()` (o "vazamento"), em seguida, solicita uma entrada. Ele lê 512 bytes para um buffer de apenas 32 bytes, causando um buffer overflow. A função `win()` não é chamada diretamente.
 
 ```bash
 int win(){
@@ -334,7 +336,7 @@ int main(){
     vuln();
 }
 ```
-Ao executar o random, ele nos dá o "segredo": o endereço da função vuln(), que muda a cada execução por causa do ASLR.
+Ao executar o random, ele nos dá o "segredo": o endereço da função `vuln()`, que muda a cada execução por causa do ASLR.
 
 Como no desafio anterior, precisamos do offset para o $rsp. Usando GDB e um padrão cíclico (cyclic pattern), determinamos que o offset é, novamente, 264 bytes.
 
@@ -415,9 +417,9 @@ Após executarmos nosso script, recebemos uma shell na máquina alvo e conseguim
 ### Introdução:
 Este desafio é uma exploração binária ret2libc que requer múltiplos estágios. O processo é dividido em duas partes principais:
 
-1. Estágio 1 (Leak de Endereço): Usamos a técnica ret2plt para vazar um endereço da libc. Fazemos isso chamando a função puts através da PLT (Procedure Linkage Table) e passando como argumento o seu próprio endereço na GOT (Global Offset Table). Isso faz com que o programa imprima o endereço real da puts na memória.
+1. `Estágio 1 (Leak de Endereço)`: Usamos a técnica ret2plt para vazar um endereço da libc. Fazemos isso chamando a função puts através da PLT (Procedure Linkage Table) e passando como argumento o seu próprio endereço na GOT (Global Offset Table). Isso faz com que o programa imprima o endereço real da puts na memória.
 
-2. Estágio 2 (Exploit): Com o endereço vazado, calculamos o endereço base da libc. Com isso, podemos encontrar o endereço de qualquer função (como system) e de strings (como "/bin/sh"). Em seguida, enviamos um segundo payload ret2libc para chamar system("/bin/sh") e obter uma shell.
+2. `Estágio 2 (Exploit)`: Com o endereço vazado, calculamos o endereço base da libc. Com isso, podemos encontrar o endereço de qualquer função (como system) e de strings (como "/bin/sh"). Em seguida, enviamos um segundo payload ret2libc para chamar system("/bin/sh") e obter uma shell.
 
 ### Análise inicial:
 Primeiro, executamos a aplicação no GDB. Criamos um padrão cíclico (cyclic pattern) de tamanho suficiente e o passamos para o programa.
@@ -506,12 +508,12 @@ Após executarmos nosso script, recebemos uma shell na máquina alvo e conseguim
 
 ### Introdução
 
-Neste desafio, estamos lidando com uma vulnerabilidade de Format String. Isso nos lembrou do desafio format string2 do picoCTF, mas aqui não temos nenhuma variável óbvia na stack para sobrescrever com nosso conteúdo.
+Neste desafio, estamos lidando com uma vulnerabilidade de Format String, mas não temos nenhuma variável óbvia na stack para sobrescrever com nosso conteúdo.
 
 ### Análise inicial:
 O programa pede um nome de usuário (username) e o imprime usando printf sem qualquer proteção de formatação, tornando-o vulnerável a um ataque de format string.
 
-Além disso, o código-fonte revela uma função win() que contém uma chamada para system("/bin/sh"). Se conseguirmos explorar a falha para executar essa função, obteremos uma shell.
+Além disso, o código-fonte revela uma função win() que contém uma chamada para `system("/bin/sh")`. Se conseguirmos explorar a falha para executar essa função, obteremos uma shell.
 
 ```bash
 int win(){
@@ -588,3 +590,6 @@ s.interactive()
 Após executarmos nosso script, recebemos uma shell na máquina alvo e conseguimos ler a flag do sétimo desafio.
 
 ` THM{l3arn1ng_f0rm4t_str1ngs_awes0m3}`
+
+## Conclusão
+Esses desafios mostram que falhas clássicas, buffer overflows, execução de shellcode, ret2win/ret2libc, vazamentos para contornar ASLR e format strings, permitem controlar o fluxo e obter shells, reforçando a importância de validação de entrada e mitigações como canários, NX, ASLR e RELRO.
