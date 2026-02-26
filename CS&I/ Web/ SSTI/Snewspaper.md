@@ -1,4 +1,4 @@
-# Sk1ttl3 Notepad
+# Notepad
 ###### Solved by @Mayaracar2
 > This is a CTF about SSTI,Web Exploitation
 ## Notepad
