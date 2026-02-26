@@ -1,7 +1,7 @@
-# Sk1ttl3 News Network
+# Sk1ttl3 Notepad
 ###### Solved by @Mayaracar2
 > This is a CTF about SSTI,Web Exploitation
-## Sk1ttl3 News Network
+## Notepad
 ### Introdução
 O desafio consistia na exploração de uma vulnerabilidade de Server-Side Template Injection (SSTI) em um site responsável por retornar os blocos textos que foram escritos. O objetivo era identificar a falha na aplicação e explorá-la para obter acesso a informações sensíveis armazenadas no servidor.
 ### Análise Inicial
