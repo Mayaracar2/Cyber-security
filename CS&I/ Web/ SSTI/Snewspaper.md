@@ -3,7 +3,7 @@
 > This is a CTF about SSTI,Web Exploitation
 ## Sk1ttl3 News Network
 ### Introdução
-O desafio consistia na exploração de uma vulnerabilidade de Server-Side Template Injection (SSTI) em um site responsável por armazenar e exibir conteúdos de um jornal. O objetivo era identificar a falha na aplicação e explorá-la para obter acesso a informações sensíveis armazenadas no servidor.
+O desafio consistia na exploração de uma vulnerabilidade de Server-Side Template Injection (SSTI) em um site responsável por retornar os blocos textos que foram escritos. O objetivo era identificar a falha na aplicação e explorá-la para obter acesso a informações sensíveis armazenadas no servidor.
 ### Análise Inicial
 Durante a fase de reconhecimento, foi realizado o teste clássico de SSTI utilizando a expressão:
 
